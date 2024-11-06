@@ -1,0 +1,33 @@
+{
+    "_tokenResponse": {
+        "displayName": "",
+        "email": "mexantco@gmail.com",
+        "expiresIn": "3600",
+        "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImQ0OWU0N2ZiZGQ0ZWUyNDE0Nzk2ZDhlMDhjZWY2YjU1ZDA3MDRlNGQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vY2x1YmluLWQ2MWM4IiwiYXVkIjoiY2x1YmluLWQ2MWM4IiwiYXV0aF90aW1lIjoxNjk5MDg2Nzk4LCJ1c2VyX2lkIjoiNVJoQ1NaWTFoRmRDMVJGSk1iVjdsQkk2bldoMSIsInN1YiI6IjVSaENTWlkxaEZkQzFSRkpNYlY3bEJJNm5XaDEiLCJpYXQiOjE2OTkwODY3OTgsImV4cCI6MTY5OTA5MDM5OCwiZW1haWwiOiJtZXhhbnRjb0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsibWV4YW50Y29AZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.I8WlXoOl80PaW6lS7CeKaB-tHje-TMSM34r3Vq0lVVPwRHu8a3lnkn9yCOnbSJkWA9Me1XKqYnM91h96S2smyu7emOvjNJH17u8CER8kEPN-qBRJY32Y3F8Lc12paawuwReIBGCdqLGNDy2PNjiwsjwmmUitX85nssz93QV8_qpAFROOYJdYKACFK0JTpftFQNIBRBT8KVYzbkYq3x0qnaIxjzjv-NUUvDgDyomwzZt-BPYwpkWpMSAPehA7E9mWgsRF8JC-chXa4QfPhZYn0a5ixovckm6CgC2iW601bDpashmn3wJx-8o95anj1n4Z30_VTXH2rwBFz8_HiuWZkg",
+        "kind": "identitytoolkit#VerifyPasswordResponse",
+        "localId": "5RhCSZY1hFdC1RFJMbV7lBI6nWh1",
+        "refreshToken": "AMf-vBwKnq5v8JwpW4XjSQkpJe3Pq2OnZHu4fH8nTeKso4XXPk7Lb66aJdUzsDc--BtUL5B6hSQv4wbNcZkHY-5UhHuoRa8l-1ZHlBOyjIGIS-QDjkJhpla320WY4NytNLx7o-RxVmN4Z-Qrl8ai57Hk0_1ccUQpN3rO1-K1CtmMDqi3gjPu-xeYJzlCkjsdAYbAvPCjix1MGgIIhKLHEBhMj0KhZAU-KA",
+        "registered": true
+    },
+    "operationType": "signIn",
+    "providerId": null,
+    "user": {
+        "_redirectEventId": undefined,
+        "apiKey": "AIzaSyDF9WfkqrwxyQzU8sby3_xSqL_JKva_6RU",
+        "appName": "[DEFAULT]",
+        "createdAt": "1699080441553",
+        "displayName": undefined,
+        "email": "mexantco@gmail.com",
+        "emailVerified": false,
+        "isAnonymous": false,
+        "lastLoginAt": "1699086727381",
+        "phoneNumber": undefined,
+        "photoURL": undefined,
+        "providerData": [Array
+        ],
+        "stsTokenManager": [Object
+        ],
+        "tenantId": undefined,
+        "uid": "5RhCSZY1hFdC1RFJMbV7lBI6nWh1"
+    }
+}

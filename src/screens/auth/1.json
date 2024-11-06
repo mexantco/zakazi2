@@ -1,0 +1,13 @@
+{"ava": "https://avatars.dzeninfra.ru/get-zen_doc/3384370/pub_5f2a97342249cd65aa96d6f4_5f2aa14254d3b87eca102c09/scale_1200", 
+"banners": [{"date": [Timestamp], "url": "<html><head><title>403 Forbidden</title></head><body<center><h1>403 Forbidden</h1></center><hr><center>nginx-reuseport/1.21.1</center</body>
+</html>"}], 
+"bar": [{"cost": "8", "id": 1724011477891, "img": "<html><head><meta http-equiv='Content-Type' content='text/html; charset=utf-8'><title>Slim Application Error</title><style>body{margin:0;padding:30px;font:12px/1.5 Helvetica,Arial,Verdana,sans-serif;}h1{margin:0;font-size:48px;font-weight:normal;line-height:48px;}strong{display:inline-block;width:65px;}</style></head><body><h1>Slim Application Error</h1><p>A website error has occurred. Sorry for the temporary inconvenience.</p></body></html>", "name": "П", "opis": "Р"}, {"cost": "88", "id": 1724011756186, "img": "<html><head><meta http-equiv='Content-Type' content='text/html; charset=utf-8'><title>Slim Application Error</title><style>body{margin:0;padding:30px;font:12px/1.5 Helvetica,Arial,Verdana,sans-serif;}h1{margin:0;font-size:48px;font-weight:normal;line-height:48px;}strong{display:inline-block;width:65px;}</style></head><body><h1>Slim Application Error</h1><p>A website error has occurred. Sorry for the temporary inconvenience.</p></body></html>", "name": "П", "opis": "Р"}],
+ "cid": "38ZmPkrzQmLkzG5hl64h", 
+ "lat": 56.107, 
+ "lon": 94.5626, 
+ "name ": "dener", 
+ "ordersCount": 4, 
+ "owner": "0yQ6inr3dpTRtjSJqBaZo3DCWsf1", 
+ "ruName": "Денер", 
+ "shipping": true, 
+ "shippingCost": "100"}

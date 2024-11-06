@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "32831815315",
+    "project_id": "zakazi-7ed26",
+    "storage_bucket": "zakazi-7ed26.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:32831815315:android:7361d37d9e194c395c5766",
+        "android_client_info": {
+          "package_name": "com.mexantco.zakazi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDP0nSxAnECI1UeeYJV-MNKn_em8FTXZo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
