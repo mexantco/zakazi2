@@ -1,24 +1,33 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs"
 import { collection, getDocs, getFirestore, query, where } from "firebase/firestore"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { View } from "react-native"
+import ListOrders from "../../components/ui/ListOrders"
 
 const Statistic = ({route})=>{
     const Top = createMaterialTopTabNavigator();
     const db = getFirestore()
     const {cid} = route.params
+    const [ordersArr,setOrders] = useState([])
+    console.log('orders')
+    console.log(ordersArr)
     useEffect(()=>{
         const asyncFn = async ()=>{
-            const q = query(
+        let arr = []
+        const q = query(
             collection(db, "orders")
             ,where('club', '==', cid)
             );
         const orders = await  getDocs(q)
-        console.log('4444')
+        
         orders.forEach(element => {
-            console.log(element.data())
+            console.log('ddd')
+            arr.push(element.data())
 
         });
+        console.log('arr')
+        console.log(arr)
+        setOrders(arr)
         }
         asyncFn()
         
@@ -28,16 +37,17 @@ const Statistic = ({route})=>{
             <Top.Navigator>
                 <Top.Screen 
                     name="список"
-                    component={()=>(<></>)}
+                    children={()=><ListOrders ordersArr={ordersArr}/>}
+                    
                 />
-                <Top.Screen
+                {/* <Top.Screen
                     name="календарь"
                     component={()=>(<></>)}
                 />
                 <Top.Screen
                     name="график"
                     component={()=>(<></>)}
-                />
+                /> */}
             </Top.Navigator>
         </View>
     )

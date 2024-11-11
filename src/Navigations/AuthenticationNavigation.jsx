@@ -39,6 +39,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from "react-native-safe-area-context";
 import MyClubs from "../screens/auth/MyClubs";
 import customHeader from "../components/ui/customHeader";
+import OrderDetail from "../screens/auth/OrderDetail";
 
 
 const Stack = createStackNavigator();
@@ -149,6 +150,7 @@ const AuthenticationNavigation = () => {
       }}
       />
       <Stack.Screen name="Chat" component={Chat} />
+      <Stack.Screen name="OrderDetail" component={OrderDetail} />
       <Stack.Screen name="User" component={User} />
       <Stack.Screen name="Statistic" component={Statistic} />
       <Stack.Screen 
