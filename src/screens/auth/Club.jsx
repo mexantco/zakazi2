@@ -126,15 +126,15 @@ const Club = ({route, navigation}) => {
   })
   const hideAnimation = ()=>{
     tabBarTranslateY.value = withTiming(100,{
-      duration: 700,
+      duration: 10,
       easing: Easing.out(Easing.exp),
     })
   }
-  navigation.addListener('beforeRemove', async (e)=>{
-    e.preventDefault()
-    hideAnimation()
-    setTimeout(()=>{navigation.dispatch(e.data.action)},700)
-  })
+  // navigation.addListener('beforeRemove', async (e)=>{
+  //   //e.preventDefault()
+  //   hideAnimation()
+  //   setTimeout(()=>{navigation.dispatch(e.data.action)},0)
+  // })
   useFocusEffect(()=>{
     
     tabBarTranslateY.value = withTiming(0,{

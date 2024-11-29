@@ -14,16 +14,41 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFonts } from "expo-font";
 import { getClubDataById } from "../../utils/club";
 
+const db = getFirestore();
 
-const Club = ({ navigation,club, index }) => {
+const Club = ({ navigation,club, index, copy }) => {
+  
+  if(club==copy){return false}
   // const db = getFirestore();
   //   const uData = useSelector((state) => state.user.userData);
-  const [clubData,setClubdata] = useState(null)
   
+  const [clubData,setClubdata] = useState(null)
+  const handleSelect = async()=>{
+    
+    if(copy){
+      
+      await handleCopy()
+    }else{
+      let res = await getClubDataById(club); 
+      
+      navigation.navigate('Club', {club:res})
+    }
+  }
+  const handleCopy = async ()=>{
+    const data = await getClubDataById(club )
+    
+    const docRef = doc(db, 'club', copy)
+    await updateDoc(docRef,{
+      bar:[...data.bar]
+    })
+    navigation.pop()
+  }
   useEffect(()=>{
    const  asFn = async ()=>{
     let res = await getClubDataById(club);
+    
     setClubdata(res)
+    
   }
     asFn()
   },[])
@@ -39,7 +64,7 @@ const Club = ({ navigation,club, index }) => {
     <>
       <View style={{backgroundColor:!index % 2 === 0?'#ffffff20':'#ffffff00'}}>
         <TouchableRipple
-          onPress={async ()=>{let res = await getClubDataById(club); console.log(res); navigation.navigate('Club', {club:res})}}
+          onPress={async ()=>{handleSelect()}}
           rippleColor="#a6a6a652"
         >
           <View style={styles.innerChatCard}>
@@ -60,13 +85,12 @@ const Club = ({ navigation,club, index }) => {
 };
 
 const MyClubs = ({navigation, route}) => {
-  const clubs=route.params.clubs
-  
+  const {clubs, copy}=route.params
   
 //   const uData = useSelector((state) => state.user.userData);
 //   useEffect(()=>{
 
-//     const db = getFirestore();
+//     
 //     const asFn= async ()=>{
 //       const q = query(
 //         collection(db, "staff")
@@ -126,7 +150,7 @@ const MyClubs = ({navigation, route}) => {
         data={clubs}
         keyExtractor={(item, index) => index}
         renderItem={({ item, index }) => 
-        <Club club={item} index={index+1} navigation={navigation} />}
+        <Club club={item} index={index+1} navigation={navigation} copy={copy} />}
       /></>):(<><Text>Вы еще не добавили продавцов.</Text></>)}
 
     </View>

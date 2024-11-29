@@ -49,7 +49,7 @@ const Message = ({ message, order }) => {
     </View>
   );
 };
-const Chat = ({ navigation, uid, unr, order, modal, active }) => {
+const Chat = ({ navigation, uid, unr, order, modal, active, mode }) => {
   let [fontsLoaded] = useFonts({
     'Gilroy-Light': require('../../fonts/Gilroy-Light.otf'),
     'Gilroy-ExtraBold': require('../../fonts/Gilroy-ExtraBold.otf'),
@@ -190,7 +190,8 @@ const dispatch = useDispatch();
         /></>):(<><Text style={{alignSelf:'center', flex:1, verticalAlign:'middle'}}>Подождите</Text></>)}
 
       </View>
-      <View style={styles.bottomBar}>
+      {mode!='view'&&
+      (<View style={styles.bottomBar}>
         <View style={{ flex: 1 }}>
           <TextInput
             mode="flat"
@@ -208,7 +209,8 @@ const dispatch = useDispatch();
             onPress={sendMessage}
           />
         </View>
-      </View>
+      
+      </View>)}
     </View>
   );
 };

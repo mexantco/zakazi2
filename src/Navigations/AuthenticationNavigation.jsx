@@ -40,7 +40,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import MyClubs from "../screens/auth/MyClubs";
 import customHeader from "../components/ui/customHeader";
 import OrderDetail from "../screens/auth/OrderDetail";
-
+import HeaderCustom from "../components/ui/Header";
 
 const Stack = createStackNavigator();
 const AuthenticationNavigation = () => {
@@ -111,9 +111,9 @@ const AuthenticationNavigation = () => {
         ...mainShadow,
       }}
     >
-      <View>
+      {/* <View>
         <Text>{`Балланс: ${userData.ballance}`}</Text>
-      </View>
+      </View> */}
     <Stack.Navigator>
       <Stack.Screen
         name="MainScreen"
@@ -141,38 +141,39 @@ const AuthenticationNavigation = () => {
       options={{
         animationEnabled:false,
         title:'Заказы Бара',
-        header:(props)=>(
-          <BlurView tint='dark' intensity={70} style={{justifyContent:'center', alignItems:'center', backgroundColor:'#bbbbff40', borderBottomWidth:1, borderColor:'#ffffff80', height:100}}>
-            <Text style={{fontSize:24, textShadowColor: '#bbbbff', textShadowRadius:20, width:'100%', textAlign:'center', fontFamily:'Gilroy-Semibold',color:'#fff'}}>Заказы работа</Text>
-
-   </BlurView>
-        )
+        header:()=>(<HeaderCustom name='Заказы Бара'/>)
       }}
       />
-      <Stack.Screen name="Chat" component={Chat} />
-      <Stack.Screen name="OrderDetail" component={OrderDetail} />
-      <Stack.Screen name="User" component={User} />
-      <Stack.Screen name="Statistic" component={Statistic} />
+      {/* <Stack.Screen name="Chat" component={Chat} /> */}
+      <Stack.Screen 
+        name="OrderDetail" 
+        component={OrderDetail}
+        options={{
+          header:()=>(<HeaderCustom name='Детали заказа'/>)
+          
+        }}
+        />
+      {/* <Stack.Screen name="User" component={User} /> */}
+      <Stack.Screen 
+        options={{
+          header:()=>(<HeaderCustom name='Статистика продаж'/>)
+        }}
+        name="Statistic" 
+        component={Statistic} />
       <Stack.Screen 
       name="MyClubs" 
       component={MyClubs} 
       options={{
         animationEnabled:false,
         title:'Заказы',
-        header:(props)=>(
-          <BlurView tint='dark' intensity={70} style={{justifyContent:'center', alignItems:'center', backgroundColor:'#bbbbff40', borderBottomWidth:1, borderColor:'#ffffff80', height:50}}>
-            <Text style={{fontSize:24, textShadowColor: '#bbbbff', textShadowRadius:20, width:'100%', textAlign:'center', fontFamily:'Gilroy-Semibold',color:'#fff'}}>Мои магазины</Text></BlurView>
-        )
+        header:()=>(<HeaderCustom name='Мои Магазины'/>)
       }}
       />
       <Stack.Screen name="Orders" component={Orders}
       options={{
         animationEnabled:false,
         title:'Заказы',
-        header:(props)=>(
-          <BlurView tint='dark' intensity={70} style={{justifyContent:'center', alignItems:'center', backgroundColor:'#bbbbff40', borderBottomWidth:1, borderColor:'#ffffff80', height:50}}>
-            <Text style={{fontSize:24, textShadowColor: '#bbbbff', textShadowRadius:20, width:'100%', textAlign:'center', fontFamily:'Gilroy-Semibold',color:'#fff'}}>Заказы</Text></BlurView>
-        )
+        header:()=>(<HeaderCustom name='Заказы'/>)
       }}
       />
       <Stack.Screen 
@@ -181,28 +182,22 @@ const AuthenticationNavigation = () => {
       options={{
         animationEnabled:false,
         title:'Покажите это продавцу',
-        header:(props)=>(
-          <BlurView tint='dark' intensity={70} style={{justifyContent:'center', alignItems:'center', backgroundColor:'#bbbbff40', borderBottomWidth:1, borderColor:'#ffffff80', height:50}}>
-            <Text style={{fontSize:24, textShadowColor: '#bbbbff', textShadowRadius:20, width:'100%', textAlign:'center', fontFamily:'Gilroy-Semibold',color:'#fff'}}>Покажите это продавцу</Text></BlurView>
-        )
+        header:()=>(<HeaderCustom name='Покажите это продавцу'/>)
       }}
       />
       <Stack.Screen name="Staff" component={Staff}
       options={{
         animationEnabled:false,
-        header:(props)=>(
-          customHeader('Персонал клуба'))
+        header:()=>(<HeaderCustom name='Персонал клуба'/>)
       }}
       />
       <Stack.Screen name="Settings" component={Settings}
       options={{
         animationEnabled:false,
-        header:(props)=>(
-          customHeader('Настройки профиля')
-          )
+        header:()=>(<HeaderCustom name='Настройки профиля'/>)
       }}
       />
-      <Stack.Screen name="Users" component={Users} />
+      {/* <Stack.Screen name="Users" component={Users} />
       <Stack.Screen name="Balance" component={Balance} 
       options={{
         animationEnabled:false,
@@ -210,7 +205,7 @@ const AuthenticationNavigation = () => {
           customHeader('Пополните баланс')
           )
       }}
-      />
+      /> */}
       <Stack.Screen name="Profile" component={Profile} options={{headerShown:false}}/>
       <Stack.Screen
       options={{

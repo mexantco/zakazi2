@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
   label: {
     color: "#fff",
     fontSize: 20,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Gilroy-ExtraBold",
     padding: 8,
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 10,

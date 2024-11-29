@@ -211,7 +211,7 @@ console.log(userData.role)
           <Text style={{textAlign:'center', fontFamily:'Gilroy-Semibold', color:'#000', fontSize:20}}>{userData.name}</Text>
           <View style={{flexDirection:'row', flexWrap:'wrap',  width:'80%', justifyContent:'space-around'}}>
           <View>
-          {Entypoicon({text:'пополнить балланс', name:'wallet', press:()=>{navigation.navigate('Balance')}})}
+          {/* {Entypoicon({text:'пополнить балланс', name:'wallet', press:()=>{navigation.navigate('Balance')}})} */}
           {
           userData.role=='bar'?icon({text:'заказы магазина', name:'receipt-outline', press:()=>{navigation.navigate('OrdersBar')}})
           :userData.myClubs&&userData.myClubs.length!=0?Entypoicon({text:'мои магазины', name:'shop', press:async()=>{navigation.navigate('MyClubs',{clubs: userData.myClubs})}})

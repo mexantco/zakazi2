@@ -19,6 +19,7 @@ import { Ionicons, AntDesign, Entypo, MaterialCommunityIcons, Foundation, FontAw
 import * as Notifications from 'expo-notifications';
 import Animated, { Easing, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useFocusEffect } from "@react-navigation/native";
+import { mainTheme } from "../../config/theme";
 
 const Tab = createBottomTabNavigator();
 const MainScreen = ({ navigation, route }) => {
@@ -228,7 +229,7 @@ const styles= StyleSheet.create({
     borderRadius:30, 
     justifyContent:'center', 
     alignSelf:'center',
-    backgroundColor:'#c9c9c9'
+    backgroundColor:mainTheme.colorbackGround
   },
   textBtn:{
     textAlign:'center',
@@ -239,12 +240,12 @@ const styles= StyleSheet.create({
     // transform:[{translateY:50}]
   },
   selectedText:{
-    color:'#20a020'
+    color:mainTheme.colorSelectedText
   },
   selectedIcon:{
     shadowRadius:0,
     elevation:0,
-    backgroundColor:'#a9d9a9'
+    backgroundColor:mainTheme.colorGreen
   }
 })
 export default MainScreen;

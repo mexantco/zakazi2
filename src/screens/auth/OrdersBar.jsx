@@ -278,7 +278,7 @@ const People = ({ navigation, people, index, cid }) => {
       </Modal>
       <View
         style={{
-          backgroundColor: !index % 2 === 0 ? "#ffffff20" : "#ffffff00",
+          backgroundColor: !index % 2 === 0 ? "#ffffff0" : "#ffffff00",
         }}
       >
         <TouchableRipple
@@ -310,7 +310,7 @@ const People = ({ navigation, people, index, cid }) => {
                     color: "#000",
                   }}
                 >
-                  {people.number}
+                  № {people.number}
                 </Text>
                 <Text style={styles.textStatus}>{statuses[people.status]}</Text>
               </View>

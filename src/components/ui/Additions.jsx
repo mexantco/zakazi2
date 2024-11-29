@@ -33,53 +33,62 @@ import { ScrollView } from "react-native-gesture-handler";
 import NumericInput from 'react-native-numeric-input'
 import { setOrder } from '../../reducers/user';
 import { useNavigation } from "@react-navigation/native";
+import Button from "./Button";
+import { mainTheme } from "../../config/theme";
 
 const styles = StyleSheet.create({
-    outerChatCard: {
-      backgroundColor: "white",
-      borderRadius: 24,
-    },
-    input:{
-      backgroundColor:'#fff',
-      borderWidth:1,
-      width:100
-    },
-    btnstyle:{
-      marginVertical:10,
-       width:150,
-       height:50,
-       backgroundColor:'#bbbbbb',
-        borderRadius:15,
-        justifyContent:'center',
-        alignItems:'center'
-    },
-    textinfo:{
-      marginVertical:5,
-      fontFamily:'Gilroy-Regular',
-      fontSize:18,
-      color:'#ffffff'
-    },
-    btntextstyle: {
-      color:'#ffffff',
-      fontFamily:'Gilroy-ExtraBold',
-      fontSize:18
-    },
-    innerChatCard: {
-      flexDirection: "column",
-      flex:1,
-      width:150,
-      justifyContent: "space-between",
-      alignItems: "center",
-      borderRadius: 24,
-      padding: 20,
-    },
-    napText:{
-      fontSize: 16,
-      color: "#000",
-      fontFamily: "Gilroy-Regular",
-      flex: 1,            
-    }
-  });
+  outerChatCard: {
+    backgroundColor: "white",
+    borderRadius: 24,
+  },
+  input:{
+    backgroundColor:'#fff',
+    borderWidth:1,
+    width:100
+  },
+  btnstyle:{
+    color:'#000',
+    marginVertical:10,
+     width:150,
+     height:50,
+     backgroundColor:mainTheme.colorbackGround,
+      borderRadius:50,
+      justifyContent:'center',
+      alignItems:'center'
+  },
+  textinfo:{
+    marginVertical:5,
+    fontFamily:'Gilroy-Regular',
+    fontSize:18,
+    color:mainTheme.colorDarkText
+  },
+  btntextstyle: {
+    color:mainTheme.colorDarkText,
+    fontFamily:'Gilroy-ExtraBold',
+    fontSize:18
+  },
+  innerChatCard: {
+    flexDirection: "column",
+    flex:1,
+    width:150,
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderRadius: 24,
+    padding: 20,
+  },
+  napText:{
+    fontSize: 16,
+    color: "#000",
+    fontFamily: "Gilroy-Regular",
+    flex: 1,            
+  },
+  textinfoInput:{
+    padding:5,
+    marginVertical:5,
+    width:300,
+    backgroundColor:'#fff'
+  }
+});
   
   const Addition = ({ navigation, nap, press }) => {
 
@@ -293,20 +302,12 @@ const Additions = ({route})=>{
         <BlurView intensity={30} tint='dark' style={{flex:1, flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
             <ScrollView >
               <View style={{flex:1, flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
-            <Image
-            style={{height:300, width:300, marginVertical:20}}
-            source={{uri: modalUri}}
-            heigth={300}
-            width={300}
-            />
+            
             <Text style={styles.textinfo}>{modalName}</Text>
             <Text style={[styles.textinfo, { paddingHorizontal:10}]}>{modalOpis}</Text>
             <Text style={styles.textinfo}>{modalCost+'р.'}</Text>
-            {isMy?(<></>):(<>
-            <NumericInput minValue={1} maxValue={10} value={num} onChange={value => setNum(value)} />
-            {/* <TextInput style={styles.input} keyboardType="number-pad" onChangeText={(text)=>setNum(text)}/> */}
-            </>)}
-            {isMy?(<><TouchableOpacity
+            
+            <TouchableOpacity
             style={styles.btnstyle}
             onPress={()=>{deleteItem(modalId)}}
             ><Text style={styles.btntextstyle}>Удалить</Text ></TouchableOpacity>
@@ -315,11 +316,7 @@ const Additions = ({route})=>{
             onPress={()=>{switchItem(availible, modalId)}}
             ><Text style={styles.btntextstyle}>{availible?'Нет в наличии':'В наличии'}</Text >
             </TouchableOpacity>
-            </>):(<>
-            <TouchableOpacity
-            style={styles.btnstyle}
-            onPress={()=>{addToOrder(modalId, num, modalName, modalUri, modalCost, modalId);setNum('1'); setModal2(false);}}>
-            <Text style={styles.btntextstyle}>Добавить в заказ</Text></TouchableOpacity></>)}
+            
             </View>
             </ScrollView>
             <TouchableOpacity
@@ -335,20 +332,21 @@ const Additions = ({route})=>{
      {loader()}
       </>):(<>
       <View
-        style={{flexDirection:'column', justifyContent:'flex-end', flex:1, alignItems:'center'}}
+        style={{justifyContent:'center', gap:20, alignItems:'center', flex:1, height:'100%', flexDirection:'column',  backgroundColor:'#b1b1b1'}}
+
         >
          
-          <TextInput onChangeText={setName} style={{flexGrow:0.1,marginVertical:15, borderWidth:1, width:150, height:50}}placeholder="Название"></TextInput>
+          <TextInput onChangeText={setName} style={styles.textinfoInput}placeholder="Название"></TextInput>
          
-          <TextInput keyboardType='number-pad' onChangeText={setCost} style={{flexGrow:0.1,marginVertical:15, borderWidth:1, width:50, height:50}} placeholder="Цена"></TextInput>
-          <TouchableOpacity
+          <TextInput keyboardType='number-pad' onChangeText={setCost} style={[styles.textinfoInput, {width:100}]} placeholder="Цена"></TextInput>
+          <Button
           onPress={()=>addDrink(addition)}
-           style={{flexGrow:0.1, borderWidth:2,marginVertical:15, }}
-          ><Text>Добавить</Text></TouchableOpacity>
+          
+          >Добавить</Button>
           <TouchableOpacity
             onPress={()=>setModal(false)}
-           style={{flexGrow:0.1, borderWidth:2,marginVertical:15, }}
-          ><Text>Закрыть</Text></TouchableOpacity>
+            style={[styles.btnstyle, {position:'absolute', bottom:0, width:200, marginBottom:0, borderBottomLeftRadius:0,borderBottomRightRadius:0, backgroundColor:'#bbb'}]}
+          ><Text style={styles.btntextstyle}>Закрыть</Text></TouchableOpacity>
           </View></>)}
 
       </Modal>

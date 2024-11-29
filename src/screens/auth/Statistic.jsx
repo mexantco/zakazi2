@@ -3,6 +3,7 @@ import { collection, getDocs, getFirestore, query, where } from "firebase/firest
 import { useEffect, useState } from "react"
 import { View } from "react-native"
 import ListOrders from "../../components/ui/ListOrders"
+import OrdersChart from "../../components/ui/OrdersChart"
 
 const Statistic = ({route})=>{
     const Top = createMaterialTopTabNavigator();
@@ -37,14 +38,14 @@ const Statistic = ({route})=>{
             <Top.Navigator>
                 <Top.Screen 
                     name="список"
-                    children={()=><ListOrders ordersArr={ordersArr}/>}
+                    component={()=><ListOrders ordersArr={ordersArr}/>}
                     
                 />
-                {/* <Top.Screen
-                    name="календарь"
-                    component={()=>(<></>)}
-                />
                 <Top.Screen
+                    name="график"
+                    component={()=><OrdersChart ordersArr={ordersArr}/>}
+                />
+                {/* <Top.Screen
                     name="график"
                     component={()=>(<></>)}
                 /> */}

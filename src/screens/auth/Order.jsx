@@ -94,7 +94,7 @@ const Napitok = ({ nap, idx }) => {
           >
             {nap.name}
           </Text>
-          <View style={{flexDirection:'row', flex:1, justifyContent:'space-between'}}>
+          <View style={{flexDirection:'row', flex:1, justifyContent:'space-around', paddingHorizontal:'10%'}}>
           <Text
             style={{
               textAlign:'left',
@@ -330,6 +330,7 @@ const Order = ({ navigation, route }) => {
         </>)}
       </RBSheet>
       <FlatList
+      columnWrapperStyle={{justifyContent:'flex-start', width:'50%'}}
       numColumns={2}
         // contentContainerStyle={{
         //   flexDirection: "row",
