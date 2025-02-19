@@ -20,7 +20,10 @@ import * as Notifications from 'expo-notifications';
 import Animated, { Easing, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useFocusEffect } from "@react-navigation/native";
 import { mainTheme } from "../../config/theme";
-
+import Ordersbar from "./OrdersBar";
+import ButtonMainScreen from "../../components/ui/ButtonMainScreen";
+import MyClubs from "./MyClubs";
+import Delivery from "./Delivery";
 const Tab = createBottomTabNavigator();
 const MainScreen = ({ navigation, route }) => {
 
@@ -32,8 +35,7 @@ const MainScreen = ({ navigation, route }) => {
   const dispatch = useDispatch();
   const user = useSelector(state=>state.user.userData)
   const system = useSelector(state=>state.system.system)
-  console.log('=====')
-  console.log(system)
+
   const tabBarTranslateY = useSharedValue(100)
 
   const animBottom  = useAnimatedStyle(()=>{
@@ -103,7 +105,7 @@ const MainScreen = ({ navigation, route }) => {
         swipeEnabled: false,
 
         tabBarStyle: {
-          paddingHorizontal:20,
+          paddingHorizontal:10,
           zIndex:2,
           height:90,
           borderTopWidth: 0,
@@ -117,18 +119,7 @@ const MainScreen = ({ navigation, route }) => {
       name="Orders"
        component={Orders}
         options={{
-          tabBarButton:(props)=>
-          <Animated.View style={[styles.tabBtnContainer, animBottom]}>
-          <TouchableOpacity
-           onPress={props.onPress}
-           activeOpacity={1}
-           style={[styles.tabBtn, props.accessibilityState.selected?styles.selectedIcon:null]}
-          >
-            <MaterialIcons name='playlist-add-check-circle' size={72} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon,{marginLeft:-15} ]} />
-            
-          </TouchableOpacity>
-          <Text style={[styles.textBtn, props.accessibilityState.selected?styles.selectedText:null]}>Заказы</Text>
-          </Animated.View>,
+          tabBarButton:(props)=><ButtonMainScreen size={72} props={props} title={'Мои заказы'} icon='playlist-add-check-circle' font={"MaterialIcons"}/>,
 
             headerShown:false,
             title:'Заказы'
@@ -144,18 +135,8 @@ const MainScreen = ({ navigation, route }) => {
         
         
         options={{
-          tabBarButton:(props)=>
-          <Animated.View style={[styles.tabBtnContainer, animBottom]}>
-          <TouchableOpacity
-           onPress={props.onPress}
-           activeOpacity={1}
-           style={[styles.tabBtn, props.accessibilityState.selected?[styles.selectedIcon,{backgroundColor:'#dd7777'}]:null]}
-          >
-            <FontAwesome name='warning' size={40} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon]}/>
-          </TouchableOpacity>
-          <Text style={[styles.textBtn, props.accessibilityState.selected?[styles.selectedText,{color:'#dd7777'}]:null]}>Внимание</Text>
-
-          </Animated.View>,
+          tabBarButton:(props)=><ButtonMainScreen size={40} props={props} title={'Внимание'} icon='warning' warning font='FontAwesome'/>,
+          
           headerShown:false,
           title: "Места" }}
       />
@@ -167,18 +148,7 @@ const MainScreen = ({ navigation, route }) => {
             hide:hideAnimation}}
           component={Maps}
           options={{
-            tabBarButton:(props)=>
-            <Animated.View style={[styles.tabBtnContainer, animBottom]}>
-            <TouchableOpacity
-            onPress={props.onPress}
-            activeOpacity={1}
-            style={[styles.tabBtn, props.accessibilityState.selected?styles.selectedIcon:null]}
-            >
-              <FontAwesome name="globe" size={70} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon]}/>
-            </TouchableOpacity>
-            <Text style={[styles.textBtn, props.accessibilityState.selected?styles.selectedText:null]}>Места</Text>
-
-            </Animated.View>,
+            tabBarButton:(props)=><ButtonMainScreen props={props} size={70} title={'Места'} icon='globe' font='FontAwesome'/>,
             headerShown:false,
             title: "Места" }}
         />
@@ -188,22 +158,61 @@ const MainScreen = ({ navigation, route }) => {
           component={Profile}
           
           options={{
-            tabBarButton:(props)=>
-            <Animated.View style={[styles.tabBtnContainer, animBottom]}>
-            <TouchableOpacity
-            onPress={props.onPress}
-            activeOpacity={1}
-            style={[styles.tabBtn, props.accessibilityState.selected?styles.selectedIcon:null]}
-            >
-              <FontAwesome name="user-circle" size={60} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon ]}/>
-              
-            </TouchableOpacity>
-            <Text style={[styles.textBtn, props.accessibilityState.selected?styles.selectedText:null]}>Профиль</Text>
-            </Animated.View>,
+            tabBarButton:(props)=><ButtonMainScreen props={props} size={60} title={'Профиль'} icon='user-circle' font='FontAwesome'/>,
             
             headerShown:false,
             title: "Профиль" }}
         />
+        {user.role&&user.role=='bar'&&
+        <Tab.Screen
+        name="Работа"
+        initialParams={{user:user}}
+        component={Ordersbar}
+        options={{
+          tabBarButton:(props)=><ButtonMainScreen props={props} size={40} title={'Работа'} icon='receipt-outline' font="IonIcons"/>,
+          headerShown:false,
+          title: "Работа" }}
+      />
+      }
+        {user.role&&user.role=='delivery'&&
+        <Tab.Screen
+        name="Доставка"
+        initialParams={{user:user}}
+        component={Delivery}
+        options={{
+          tabBarButton:(props)=><ButtonMainScreen props={props} size={50} title={'Доставка'} icon='delivery-dining' font="MaterialIcons"/>,
+          headerShown:false,
+          title: "Работа" }}
+      />
+      }
+{/* 
+        {(user.role&&user.role=='delivery')&&
+        <Tab.Screen
+        name="Доставка"
+        initialParams={{user:user}}
+        component={Delivery}
+        
+        options={{
+          tabBarButton:(props)=><ButtonMainScreen props={props} size={60} title={'Доставка'} icon='horse-human' font="MaterialCommunityIcons"/>,
+          
+          headerShown:false,
+          title: "Работа" }}
+      />}
+         */}
+        {user.myClubs&&user.myClubs.length>0?
+        <Tab.Screen
+        name="MyClubs"
+        initialParams={{user:user}}
+        component={MyClubs}
+        
+        options={{
+          tabBarButton:(props)=><ButtonMainScreen props={props} size={50} title={'Мой бизнес'} icon='shop' font="Entypo"/>,
+          
+          headerShown:false,
+          title: "Работа" }}
+      />
+      :null
+        }
       </>)}
       
 

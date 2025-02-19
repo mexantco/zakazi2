@@ -87,14 +87,48 @@ const Profile = ({route, navigation}) => {
   const [sliderInstance, setSliderInstance] = useState(null);
   const userData = useSelector((state) => state.user.userData);
 
-
-  //////////////////////////////
-  const warn = ()=>{
-    if(userData.photos.length==10){
-      Alert.alert('Извините','нельзя добавлять больше 10 фото')
-      return false
-    }pickImageAsync()
+  const handleSingout = async ()=>{
+    const auth =getAuth()
+    signOut(auth).then(()=>{
+      const userAuth = auth.currentUser;
+    
+      if (userAuth) {
+        console.log('userAuth')
+        console.log(userAuth)
+          const q = query(collection(firestore, "users"), where('uid', '==', userAuth.uid));
+         
+          const unsubscribe = onSnapshot(q, async(querySnapshot) => {
+           
+            querySnapshot.forEach((doc) => {
+              console.log('//--//--//--//');
+              console.log(doc.data());
+               dispatch(
+               setUserData({
+              userData: { ...doc.data(), uid: userAuth.uid },
+               })
+          );
+            });
+           
+          // setUser(userAuth);
+          });
+  
+        } else {
+          dispatch(
+            setUserData({
+              userData: {},
+            })
+          );
+          // setUser({});
+        }
+    })
   }
+  //////////////////////////////
+  // const warn = ()=>{
+  //   if(userData.photos.length==10){
+  //     Alert.alert('Извините','нельзя добавлять больше 10 фото')
+  //     return false
+  //   }pickImageAsync()
+  // }
   let [fontsLoaded] = useFonts({
     'Gilroy-Light': require('../../fonts/Gilroy-Light.otf'),
     'Gilroy-ExtraBold': require('../../fonts/Gilroy-ExtraBold.otf'),
@@ -102,86 +136,86 @@ const Profile = ({route, navigation}) => {
     'Gilroy-Semibold': require('../../fonts/Gilroy-Semibold.ttf'),
    });
 
-   const uploadFile = async (fileUri, uData, urlApi) => {
-    console.log(uData.photos.length)
+  //  const uploadFile = async (fileUri, uData, urlApi) => {
+  //   console.log(uData.photos.length)
 
 
-   // Замените на ваш конечный пункт API
+  //  // Замените на ваш конечный пункт API
 
-    try {
+  //   try {
 
-      const callback = uploadProgressData => {
-        const progress =uploadProgressData.totalBytesSent/uploadProgressData.totalBytesExpectedToSend;
-        setProg(progress);
+  //     const callback = uploadProgressData => {
+  //       const progress =uploadProgressData.totalBytesSent/uploadProgressData.totalBytesExpectedToSend;
+  //       setProg(progress);
 
-      };
+  //     };
 
-      const up =   FileSystem.createUploadTask(urlApi, fileUri,{
-        httpMethod:'POST',
-        headers:{
-          uid:uData.uid
-        },
-        uploadType:FileSystem.FileSystemUploadType.MULTIPART,
-        fieldName:'file'
-       },
-       callback
-       );
-      const resp = await up.uploadAsync()
-       ///////////////upload to firebase
+  //     const up =   FileSystem.createUploadTask(urlApi, fileUri,{
+  //       httpMethod:'POST',
+  //       headers:{
+  //         uid:uData.uid
+  //       },
+  //       uploadType:FileSystem.FileSystemUploadType.MULTIPART,
+  //       fieldName:'file'
+  //      },
+  //      callback
+  //      );
+  //     const resp = await up.uploadAsync()
+  //      ///////////////upload to firebase
 
-        const db = getFirestore();
-        const docRef = doc(db, "users", uData.uid);
-        const docSnap = await getDoc(docRef);
-        await updateDoc(docRef, {
-          photos: [
-            resp.body.trim(),
-            ...docSnap.data().photos,
+  //       const db = getFirestore();
+  //       const docRef = doc(db, "users", uData.uid);
+  //       const docSnap = await getDoc(docRef);
+  //       await updateDoc(docRef, {
+  //         photos: [
+  //           resp.body.trim(),
+  //           ...docSnap.data().photos,
 
-          ]
-        });
+  //         ]
+  //       });
 
-    } catch (error) {
-      console.error('Ошибка при загрузке файла:', error);
-    }
-  };
+  //   } catch (error) {
+  //     console.error('Ошибка при загрузке файла:', error);
+  //   }
+  // };
 
   // console.log(userData.photos.length)
 
 
   const [uri, setUri] = useState();
 
-  const pickImageAsync = async () => {
-    setModal(true)
-    setLoading(true)
-    let result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect:[1,1],
-      quality: 1,
-    });
+  // const pickImageAsync = async () => {
+  //   setModal(true)
+  //   setLoading(true)
+  //   let result = await ImagePicker.launchImageLibraryAsync({
+  //     allowsEditing: true,
+  //     aspect:[1,1],
+  //     quality: 1,
+  //   });
 
-    if (!result.canceled) {
-        // console.log(result);
+  //   if (!result.canceled) {
+  //       // console.log(result);
 
-      let uri = result.assets[0].uri;
-      // setUri(uri)
-      await uploadFile(uri, userData, 'https://clubnight.ru/upload_photo.php');
+  //     let uri = result.assets[0].uri;
+  //     // setUri(uri)
+  //     await uploadFile(uri, userData, 'https://clubnight.ru/upload_photo.php');
 
 
 
-      let data = await getUserDataById(userData.uid);
+  //     let data = await getUserDataById(userData.uid);
 
-      await dispatch(setUserData({ userData: data }))
-      setModal(false);
-      setLoading(false);
-      setProg(0);
-      setResfresh(!refresh);
-      sliderInstance.moveToIdx(0);
+  //     await dispatch(setUserData({ userData: data }))
+  //     setModal(false);
+  //     setLoading(false);
+  //     setProg(0);
+  //     setResfresh(!refresh);
+  //     sliderInstance.moveToIdx(0);
 
-    } else {
+  //   } else {
 
-      setModal(false)
-    }
-  };
+  //     setModal(false)
+  //   }
+  // };
   // const navigation = useNavigation();
 //   const showSignupScreen = () => {
 //     requestAnimationFrame(() => {
@@ -189,7 +223,6 @@ const Profile = ({route, navigation}) => {
 //     });
 //   };
 
-console.log(userData.role)
   return (
 
       <SafeAreaView style={styles.rootContainer}>
@@ -210,17 +243,20 @@ console.log(userData.role)
          <View style={{justifyContent:'center', alignItems:'center'}}>
           <Text style={{textAlign:'center', fontFamily:'Gilroy-Semibold', color:'#000', fontSize:20}}>{userData.name}</Text>
           <View style={{flexDirection:'row', flexWrap:'wrap',  width:'80%', justifyContent:'space-around'}}>
-          <View>
+          {/* <View> */}
           {/* {Entypoicon({text:'пополнить балланс', name:'wallet', press:()=>{navigation.navigate('Balance')}})} */}
-          {
-          userData.role=='bar'?icon({text:'заказы магазина', name:'receipt-outline', press:()=>{navigation.navigate('OrdersBar')}})
+          {/* {
+          userData.role=='bar'?icon({text:'заказы магазина', name:'receipt-outline', press:async ()=>{
+            let isWorking = await getClubDataById(userData.roleClub)
+            navigation.navigate('OrdersBar', {isWorking:isWorking})
+          }})
           :userData.myClubs&&userData.myClubs.length!=0?Entypoicon({text:'мои магазины', name:'shop', press:async()=>{navigation.navigate('MyClubs',{clubs: userData.myClubs})}})
           :null
-          }
-          </View>
+          } */}
+          {/* </View> */}
           <View>
           {icon({text:'настройки',name:'options', press:()=>{navigation.navigate('Settings')}})}
-          {icon({text:'выйти',name:'log-out', press:()=>{signOut(getAuth())}})}
+          {icon({text:'выйти',name:'log-out', press:handleSingout})}
           </View>
           </View>
           </View>

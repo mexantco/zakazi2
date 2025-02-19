@@ -1,21 +1,10 @@
-import { StyleSheet, Text, View, ImageBackground, Image, TouchableOpacity, Alert, Modal } from "react-native";
+import { StyleSheet, Text, View, ImageBackground, Image, TouchableOpacity, Alert, Modal, TextInput } from "react-native";
 import React, {useRef, useState} from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
-import Button from "../../components/ui/Button";
+
 import { mainShadow } from "../../components/ui/ShadowStyles";
 import { useSelector } from "react-redux";
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
-import { useKeenSliderNative } from 'keen-slider/react-native';
-import { useDispatch } from "react-redux";
-import { setUserData } from '../../reducers/user';
-import { getUserDataById } from "../../utils/user";
-import AppSlider from '../../components/ui/appSlider'
-import axios from 'react-native-axios';
-import { BlurView } from 'expo-blur';
-import * as Progress from 'react-native-progress';
-import { Shadow } from "react-native-shadow-2";
+
 
 import {
   doc,
@@ -27,14 +16,17 @@ import {
   collection,
   query,
   where,
-  updateDoc
+  updateDoc,
+  deleteDoc,
+  deleteField
 } from "firebase/firestore";
 import { Ionicons } from '@expo/vector-icons';
 import { useFonts } from "expo-font";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { TextInput } from "react-native-paper";
+import { mainTheme } from "../../config/theme";
 
 
+const db = getFirestore();
 const icon = ({name, press}) =>{
   return(
     <TouchableOpacity style={styles.chatBtn} onPress={press}>
@@ -43,13 +35,7 @@ const icon = ({name, press}) =>{
   )
 }
 const Settings = ({route}) => {
-  const [code, setCode] = useState();
-  const [prog, setProg]= useState(0);
-  const [modal,setModal] = useState(false);
-  const [loading,setLoading] = useState(false);
-  const [refresh, setResfresh] = useState(false);
-  const dispatch = useDispatch();
-  const [sliderInstance, setSliderInstance] = useState(null);
+  
   const userData = useSelector((state) => state.user.userData);
 
   //////////////////////////////
@@ -62,7 +48,7 @@ const Settings = ({route}) => {
    });
 
 const checkCode = async (code)=>{
-  const db = getFirestore();
+  
     const q = query(
     collection(db, "staff")
     ,where('code', '==', code*1)
@@ -92,44 +78,71 @@ if(querySnapshot.size==0){alert('Не верный код') }else{
 
 
 }
-
-  // console.log(userData.photos.length)
-
-
-
-
-
-  console.log(userData)
+  const fireMe = async()=>{
+    console.log('t')
+    ////////////// удаляем должнасть
+    const q = query(
+      collection(db, "staff")
+      ,where('uid', '==', userData.uid)
+      )
+      
+    const docsSnapshot =await getDocs(q)
+    console.log(docsSnapshot)
+    docsSnapshot.forEach(async snapshot=>{
+      // const doc = doc(db, 'staff', snapshot.id)
+      console.log(snapshot.id)
+      await deleteDoc(doc(db, 'staff', snapshot.id))
+    })
+   
+    ///////    удаляем мою роль
+    const docRef = doc(db, "users", userData.uid);
+          await updateDoc(docRef, {
+            role: deleteField()
+          })
+  }
   return (
 
       <SafeAreaView style={styles.rootContainer}>
         <View style={styles.topSection}>
-        <Modal
-        visible={modal}
-        transparent={true}
-        animationType='fade'
-
-        >
-            <BlurView intensity={50} tint='dark' style={{flex:1, justifyContent:'center', alignItems:'center'}}>
-            {loading?(<>
-              <Progress.Bar height={2} width={250} borderRadius={2} useNativeDriver={true} color={'white'} animationType="spring" progress={prog} />
-
-            </>):(<></>)}
-            </BlurView>
-        </Modal>
-
-         <View style={{justifyContent:'center', alignItems:'center'}}>
-          <View style={{flexDirection:'row', flexWrap:'wrap',  width:'80%', justifyContent:'space-around'}}>
-
-         
-
-          </View>
-          {userData.role&&userData.role!=''?(<></>):(<>
-          <TextInput onChangeText={(text)=>{console.log(text); if(text.length==6){checkCode(text)}}} keyboardType='number-pad' placeholder="код магазина" style={{fontSize:26, marginVertical:30, borderTopLeftRadius:15, borderTopRightRadius:15, borderBottomLeftRadius:15, borderBottomRightRadius:15}} maxLength={6}/>
-</>)}
+          <View style={{justifyContent:'center', alignItems:'center'}}>
+          <Text style={{fontSize:18}}>Работа</Text>
+          {!userData.role?
+          <>
+            <Text>
+              введите код от работодателя что бы начать принимать заказы
+            </Text>
+            <TextInput
+              onChangeText={(text)=>{if(text.length==6){checkCode(text)}}} 
+              keyboardType='number-pad' 
+              placeholder="код магазина" 
+              style={styles.codeInput} 
+              maxLength={6}
+            />
+            <TouchableOpacity style={styles.Button} onPress={()=>{Alert.alert('Вы уверены?', '', [{text:'Да', onPress:()=>{fireMe()}}, {text:'Нет, еще поработаю', onPress:()=>{}}])}}>
+              <Text>Хочу доставлять заказы</Text>
+            </TouchableOpacity>
+          </>
+          :
+          userData.role=='bar'?
+            <>
+            <Text>Что бы перестать принимать заказы в этом магазине нажмите:</Text>
+            <TouchableOpacity style={styles.codeInput} onPress={()=>{Alert.alert('Вы уверены?', '', [{text:'Да', onPress:()=>{fireMe()}}, {text:'Нет, еще поработаю', onPress:()=>{}}])}}>
+              <Text>Уволится</Text>
+            </TouchableOpacity>
+            </> 
+            :userData.role=='delivery'
+            ?<>
+            
+            <TouchableOpacity style={styles.Button} onPress={()=>{Alert.alert('Вы уверены?', '', [{text:'Да', onPress:()=>{fireMe()}}, {text:'Нет, еще поработаю', onPress:()=>{}}])}}>
+            <Text>Больше не хочу доставлять заказы</Text>
+            </TouchableOpacity>
+            </>
+            
+          :null
+          }
+          
           </View>
         </View>
-
       </SafeAreaView>
 
   );
@@ -140,6 +153,27 @@ export default Settings;
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
+  },
+  codeInput: { 
+    borderWidth:1,
+    fontSize: 26, 
+    marginVertical: 30, 
+    borderRadius:15,
+    alignContent:'center',
+    paddingVertical:15,
+    paddingHorizontal:10
+   
+  },
+  Button: { 
+    borderWidth:1,
+    fontSize: 26, 
+    marginVertical: 30, 
+    borderRadius:15,
+    alignContent:'center',
+    paddingVertical:15,
+    paddingHorizontal:10,
+    backgroundColor:'#bbb'
+   
   },
   chatBtn:{
 
@@ -155,7 +189,7 @@ const styles = StyleSheet.create({
     justifyContent:'center'
   },
   topSection: {
-      paddingTop:100,
+      paddingTop:30,
      flexGrow: 1,
     // flexDirection:'column',
     // width: "100%",

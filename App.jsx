@@ -24,13 +24,46 @@ import { PersistGate } from "redux-persist/integration/react";
 import YaMap from 'react-native-yamap2';
 import { useNavigation } from "@react-navigation/native";
 import { setPush } from "./src/reducers/push";
+import * as Contacts from 'expo-contacts';
+import { requestPermissionsAsync } from "expo-contacts";
+import registerNNPushToken from 'native-notify';
 
 YaMap.init('00559dcf-3b1e-4e95-9930-56c2b447888d');
 
 
 let persistor = persistStore(store);
 export default function App() {
- 
+  registerNNPushToken(27570, 'vQkmBW58lcX8VKdldh8fAU');
+
+  useEffect(()=>{
+    const getContacts = async () => {
+      // Запрашиваем разрешение на доступ к контактам
+      const { status } = await requestPermissionsAsync();
+      if (status === 'granted') {
+        // Получаем контакты
+        const { data } = await Contacts.getContactsAsync({
+          fields: [Contacts.Fields.PhoneNumbers],
+        });
+
+        // Проверяем, есть ли контакты
+        if (data.length > 0) {
+          // Предполагаем, что первый контакт - это ваш
+          const contact = data;
+          console.log(contact[44])
+          return
+          if (contact.phoneNumbers && contact.phoneNumbers.length > 0) {
+            console.log(contact.phoneNumbers);
+          } else {
+            console.log('Номер телефона не найден');
+          }
+        }
+      } else {
+        console.log('Разрешение не предоставлено');
+      }
+    };
+
+    getContacts();
+  })
   let [fontsLoaded] = useFonts({
     Inter_100Thin,
     Inter_200ExtraLight,

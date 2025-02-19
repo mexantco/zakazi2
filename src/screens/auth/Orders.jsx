@@ -5,7 +5,7 @@ import { chats as dummyChats } from "../../seeds/DummyData";
 import { useState } from "react";
 import { mainShadow } from "../../components/ui/ShadowStyles";
 import "../../firebase/config";
-import { collection, query, where, getDocs, addDoc, onSnapshot, or, doc, updateDoc, deleteDoc  } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, onSnapshot, or, doc, updateDoc, deleteDoc, and  } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
@@ -52,17 +52,33 @@ const colors = {
 
 const People = ({ navigation,people, index, user }) => {
  
-
-  console.log(people)
-    const [name,setName] = useState('');
+  
+   const [name,setName] = useState('');
    const [modal,setModal] = useState(false);
    const uData = useSelector((state) => state.user.userData);
    const [isChatActive, setActiveChat] = useState(false)
+   const q = query(collection(db, 'chats'), where('order', '==', people.id))
+    const [unread, setUnread] = useState(0)
+   useEffect(()=>{
+
+    const unsibscribe = onSnapshot(q,async(querySnapshot)=>{
+      let unreadCount = 0
+      querySnapshot.forEach((doc)=>{
+
+        doc.data().messages.forEach(el=>{
+          if(el.unread&&el.sender_id!=uData.uid){
+            unreadCount+=1
+          }
+        })
+      })
+      setUnread(unreadCount)
+    })
+    return ()=>unsibscribe()
+   },[])
    const cancle=async (id)=>{
-    let res = await axios.get('https://clubnight.ru/cancle_order?order_id='+id);
-    console.log('==========')
-    console.log(res)
-    await deleteDoc(doc(db, "orders", id))
+   let res = await axios.get('https://clubnight.ru/cancle_order?order_id='+id);
+    
+   await deleteDoc(doc(db, "orders", id))
    setModal(false);
     Alert.alert('Заказ отменен', 'Деньги останутся у вас на балансе');
     
@@ -84,8 +100,8 @@ const People = ({ navigation,people, index, user }) => {
    });
   // console.log(people.time+'');
   return (
-    <>
-      <View style={{backgroundColor:!index % 2 === 0?'#ffffff20':'#ffffff00'}}>
+    <View key={index}>
+      <View  style={{backgroundColor:!index % 2 === 0?'#ffffff20':'#ffffff00'}}>
         <Modal
         
         animationType='fade'
@@ -105,15 +121,16 @@ const People = ({ navigation,people, index, user }) => {
           <Text style={{marginVertical:20, fontFamily:'Gilroy-Semibold'}}>{people.cancelReason}</Text>
           <Button style={{marginVertical:10}} onPress={()=>{setModal(false)}}>Закрыть</Button>
 
-          </>):people.status==0?
-          (<>
+          </>)
+          :people.status==0
+          ?(<>
           {isChatActive?
           <Chat uid={people.id} unr={0}/>:
           <ScrollView style={{ width:'100%'}}>
           {people.order&&JSON.parse(people.order).map((item, index)=>{
-            console.log(item)
-                      return(<>
-                    <View key={index} style={{flexDirection:'row', justifyContent:'space-between', width:'100%', borderBottomWidth:1}}>
+                      return(
+                      <View key={index}>
+                    <View  style={{flexDirection:'row', justifyContent:'space-between', width:'100%', borderBottomWidth:1}}>
                       <Text style={{color:'#000'}}>{item.name}</Text>
                       <Text style={{color:'#000'}}>{`${item.num}шт.`}</Text>
                       
@@ -124,7 +141,7 @@ const People = ({ navigation,people, index, user }) => {
                         )
                       })
                       }
-                      </>)
+                      </View>)
                     })}
          </ScrollView>}
           
@@ -133,13 +150,18 @@ const People = ({ navigation,people, index, user }) => {
           <Button style={{marginVertical:10}} onPress={()=>{cancle(people.id)}}>Отменить</Button>
           
           <Button style={{marginVertical:10}} onPress={()=>{setModal(false)}}>Закрыть</Button>
-          </>):people.status==1?(<>
+          </>)
+          :people.status==1
+          ?(<>
+          <Chat uid={people.id} unr={0}/>
           <Text style={{marginVertical:30, fontSize:26, color:'#000', fontFamily:'Gilroy-Regular'}}>Заказ в работе</Text>
           
           <TouchableRipple style={{height:80, marginTop:40}} onPress={()=>{setModal(false)}}>
            <Ionicons name={'close'}  style={{shadowColor:'white', shadowRadius:5, textShadowRadius:25,textShadowColor:'#d5cefb', width:'100%', height:'100%', verticalAlign:'middle', textAlign:'center'}} size={40} color={'#000'}/>
           </TouchableRipple>
-          </>):people.status==2?(<>
+          </>)
+          :people.status==2
+          ?(<>
           <Text style={{marginVertical:30, fontSize:26, color:'#000', fontFamily:'Gilroy-Regular'}}>Покажите этот QR код продавцу</Text>
           <QRCode
 
@@ -149,16 +171,38 @@ const People = ({ navigation,people, index, user }) => {
           <TouchableRipple style={{height:80, marginTop:40}} onPress={()=>{setModal(false)}}>
            <Ionicons name={'close'}  style={{shadowColor:'white', shadowRadius:5, textShadowRadius:25,textShadowColor:'#d5cefb', width:'100%', height:'100%', verticalAlign:'middle', textAlign:'center'}} size={40} color={'#000'}/>
           </TouchableRipple>
-          </>):people.status==3?(<>
+          </>)
+          :people.status==3?(<>
+            <ScrollView style={{ width:'100%'}}>
+          {people.order&&JSON.parse(people.order).map((item, index)=>{
+                      return(
+                      <View key={index}>
+                        <View  style={{flexDirection:'row', justifyContent:'space-between', width:'100%', borderBottomWidth:1}}>
+                          <Text style={{color:'#000'}}>{item.name}</Text>
+                          <Text style={{color:'#000'}}>{`${item.num}шт.`}</Text>
+                          
+                        </View>
+                        {item.orderAdditions.map((item, idx)=>{
+                            return(
+                              <Text key={idx} style={{marginLeft:20}}>+{item.name}</Text>
+                            )
+                          })
+                          }
+                      </View>)
+                    })}
+         </ScrollView>
           <Text style={{marginVertical:30, fontSize:26, color:'#000', fontFamily:'Gilroy-Regular'}}>Заказ получен</Text>
         
           <TouchableRipple style={{height:80, marginTop:40}} onPress={()=>{setModal(false)}}>
            <Ionicons name={'close'}  style={{shadowColor:'white', shadowRadius:5, textShadowRadius:25,textShadowColor:'#d5cefb', width:'100%', height:'100%', verticalAlign:'middle', textAlign:'center'}} size={40} color={'#000'}/>
           </TouchableRipple>
-          </>):people.status==4?(<>
+          </>)
+          :people.status==4
+          ?(<>
           <Button onPress={()=>{closeOrder()}}>Заказ получен</Button>
           <Button onPress={()=>{setModal(false)}}>Закрыть</Button>
-          </>):(<></>)}
+          </>)
+          :(<></>)}
 
           </View>
         </Modal>
@@ -173,18 +217,21 @@ const People = ({ navigation,people, index, user }) => {
           <View style={styles.innerChatCard}>
             <View style={{ flex: 1, flexDirection: "row" }}>
 
-              <View style={{ width:'90%', marginStart: 10, flexDirection:'row', justifyContent:'space-between', alignItems:'center' }}>
-                <Text style={{ fontSize: 16, fontFamily: "Gilroy-Regular", alignSelf:'center', color:'#000' }}>
-                   {people.name}
-                </Text>
-                <Text style={{ color:'#000', fontFamily: "Gilroy-Regular"}}>{statuses[people.status]}</Text>
+              <View style={{ marginHorizontal:20, marginStart: 10, flexDirection:'row', justifyContent:'space-between', alignItems:'center' }}>
+              
+                <Text style={{ color:'#000', fontFamily: "Gilroy-Regular"}}>{people.address!=''&&people.status==2?'Готов в доставке':statuses[people.status]}</Text>
               </View>
+              {unread>0&&
+                <View>
+                  <Ionicons name="chatbox-sharp" size={25} color={'#bbb'}/>
+                  <Text style={{position:'absolute', right:5, bottom:0, fontWeight:'bold'}}>{unread}</Text>
+                </View>}
             </View>
             <Ionicons name={emoji[people.status]} size={30} color={colors[people.status]} />
           </View>
         </TouchableRipple>
       </View>
-      </>
+      </View>
   );
 };
 
@@ -197,19 +244,20 @@ const Orders = ({navigation, route}) => {
     const asFn= async ()=>{
 
     const q = query(
-    collection(db, "orders"), or(
+    collection(db, "orders"), and(
     where("from", "==", uData.uid),
-    where("to","==",uData.uid))
+    where("payed","==",true))
 
     );
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
 
         let users = [];
         await querySnapshot.forEach(async (doc) => {
-
- let document = doc.data();
-document.id=doc.id;
-users.push(document);
+       
+        let document = doc.data();
+        if (document.status!=6){
+        document.id=doc.id;
+        users.push(document);}
 
 
 });
@@ -231,6 +279,8 @@ setUsers(users);
     <View
 
       style={{
+        
+        marginBottom:15,
         marginHorizontal:15,
         ...mainShadow,
         flex: 1,
@@ -242,13 +292,14 @@ setUsers(users);
         overflow: "hidden",
       }}
     >
-      {people&&people.length>0?(<><FlatList
+      {people&&people.length>0?(<>
+      <FlatList
         contentContainerStyle={{ paddingBottom: 30 }}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         data={people.sort((a,b)=>b.time-a.time)}
         keyExtractor={(item, index) => index}
-        renderItem={({ item, index }) => <People user={uData} people={item} index={index+1} navigation={navigation} />}
+        renderItem={({ item, index }) => <People key={index} user={uData} people={item} index={index+1} navigation={navigation} />}
       /></>):(<><Text style={{textAlign:'center', marginTop:30}}>У вас пока нет заказов</Text></>)}
 
     </View>

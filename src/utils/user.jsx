@@ -14,6 +14,7 @@ import * as Notifications from 'expo-notifications';
 import  Constants  from "expo-constants";
 import { Platform } from "react-native";
 const firestore = getFirestore();
+
 export const getUserDataById = async (userId) => {
   
   const docRef = doc(firestore, "users", userId);
@@ -24,6 +25,11 @@ export const getUserDataById = async (userId) => {
     return false;
   }
 };
+
+export const updateUser = async (userId, params)=>{
+  const docRef = doc(firestore, "users", userId);
+  await updateDoc(docRef,{...params})
+}
 export const getUserDataByName = async (username) => {
   const firestore = getFirestore();
   const q = query(

@@ -3,6 +3,11 @@ import { collection, query, where, getDocs, addDoc, doc, updateDoc, getDoc, dele
 import { getFirestore } from "firebase/firestore";
 
 export const getChatBetweenTwo = async (uid, uid2) => {
+  // alert ('t')
+  console.trace()
+  console.log('/////')
+  console.log(uid)
+  console.log(uid2)
   const db = getFirestore();
   let arr = [uid, uid2];
   let arr2 = [uid2, uid];
@@ -14,14 +19,7 @@ export const getChatBetweenTwo = async (uid, uid2) => {
   const querySnapshot = await getDocs(q);
   if (querySnapshot.docs.length > 0) {
     return querySnapshot.docs[0];
-  } else {
-    // If chat doesn't exist, create it.
-    await addDoc(collection(db, "chats"), {
-      messages: [],
-      users: [uid, uid2],
-    });
-    // return getChatBetweenTwo(uid, uid2);
-  }
+  }else {console.log('t'); return null}
 };
 
 export const deleteChat = async (id)=>{

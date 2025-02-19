@@ -10,6 +10,9 @@ const config: ExpoConfig = {
           }
         ],
         [
+          "@maplibre/maplibre-react-native"
+        ],
+        [
           "expo-image-picker",
           {
             photosPermission: "The app accesses your photos to let you share them with your friends."

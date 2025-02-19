@@ -7,65 +7,175 @@ import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from '../../reducers/user';
 import { getUserDataById } from '../../utils/user';
 import { Shadow } from 'react-native-shadow-2';
-import { BaiduMapManager, MapView, MapTypes, Geolocation, Overlay, MapApp } from 'react-native-gizwits-baidu-map';
+// import { BaiduMapManager, MapView, MapTypes, Geolocation, Overlay, MapApp } from 'react-native-gizwits-baidu-map';
 import { shadow } from 'react-native-paper';
 import { getFirestore, query, collection, getDocs} from 'firebase/firestore';
 import { Ionicons, AntDesign, Entypo, MaterialCommunityIcons, Foundation, FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import { LatLng, LeafletView } from 'react-native-leaflet-view';
+import { MapView, RasterSource, VectorSource, StyleURL, RasterLayer, Camera, MarkerView } from "@maplibre/maplibre-react-native";
+import { OSM_RASTER_STYLE } from '../../../constants/OSM_RASTER_STYLE';
+import Supercluster from 'supercluster';
+import RBSheet from 'react-native-raw-bottom-sheet';
+import { mainTheme } from '../../config/theme';
+import { ScrollView } from 'react-native-gesture-handler';
 
-BaiduMapManager.initSDK("sIMQlfmOXhQmPLF1QMh4aBp8zZO9Lb2A");
+// BaiduMapManager.initSDK("sIMQlfmOXhQmPLF1QMh4aBp8zZO9Lb2A");
 const width = Dimensions.get('window').width;
 
+const renderClubList = (club, index, handleClick)=>{
+  return(
+    <TouchableOpacity
+    onPress={()=>{handleClick(club.clubId)}}
+    key={index} style={{backgroundColor:'#ffffff99', borderRadius:20,  marginVertical:10, flexDirection:'row', alignItems:'center', height:100, width:'100%'}}>
+            <Image height={70} width={70} style={styles.clubImage} source={{uri: club.ava}}/>
+            <Text>{club.ruName}</Text>
+    </TouchableOpacity>
+  )
+}
+
 const Maps = ({navigation, route}) => {
-    const [isUserinclub, setIsuserinclub] = useState(false);
     const [location, setLocation] = useState(null);
-    const [region, setRegion] = useState(null)
+    const RBRef  =useRef(null)
     const user1 = route.params.user;
     const [curUser, setCurUser] = useState(user1);
-    const [refresh,setResfresh] = useState(false);
-    const [isVisible, setIsvisible] = useState(true)
-    const [zoom, setZoom] = useState(16)
-    const [lat, setLat] = useState(null)
-    const [lon, setLon] = useState(null)
+    const [zoom, setZoom] = useState(0)
     const dispatch = useDispatch();
     const clubs = useSelector(state=>state.clubs.clubs);
     const YaRef = useRef(null);
+    const cameraRef = useRef(null);
     const [clusters, setClusters] = useState([])
-    const [isCoords, setIscoords] = useState();
     const [showFav, setShowfav] = useState(false);
-    console.log('sssasas')
-    console.log(route.params)
+    const mapRef = useRef(null)
     const hideAnimation= route.params.hide;
     const colors = {freeShipping:'#5fb96b', shipping:'#be6b61'}
-    let trig = false;
     const user = useSelector((state) => state.user.userData);
+    const superclusterRef = useRef(null);
+    const [RBList, setRBList] = useState([])
+    const updateClusters = async (event) => {
+      if (!mapRef.current || !superclusterRef.current) return;
+      // console.log(event)
+      const bounds = event.properties.visibleBounds;
+      const zoom = event.properties.zoomLevel;
+      // console.log('bounds')
+      // console.log(bounds.flat())
+      // console.log(zoom)
+      const bbox = [bounds.flat()[2], bounds.flat()[3], bounds.flat()[0],bounds.flat()[1]]
+      // const bbox = [
+      //   bounds[0].toArray()[0], // minX
+      //   bounds[0].toArray()[1], // minY
+      //   bounds[1].toArray()[0], // maxX
+      //   bounds[1].toArray()[1], // maxY
+      // ];
+      setZoom(zoom)
+      const newClusters = superclusterRef.current.getClusters(bbox, Math.floor(zoom));
+      // console.log('newClusters')
+      // console.log(newClusters)
+      setClusters(newClusters);
+    };
+
+    const handleClickonClub = async(id)=>{
+      RBRef.current.close()
+      hideAnimation();
+      setTimeout(async()=>{
+        let clubData = await getClubDataById(id); navigation.navigate('Club',{club: clubData, location:location})
+      },1000)
+      }
       useEffect(()=>{
-      let clustersArr=[]
-      
-     if(clubs){
-      let arr = clubs.map(el=>el)
-      for(let i=0; i<arr.length; i++){
-        // console.log(Math.abs(clubs[i].lat-clubs[i+1].lat))
-      if(Math.abs(!i+1>arr.length-1&&clubs[i].lat-clubs[i+1].lat)>zoom/40){
-        // arr.splice[i,2, {lat: (clubs[i].lat+clubs[i+1].lat)/2, lon:(clubs[i].lon+clubs[i+1].lon)/2}]
-        clustersArr.push({lat: (clubs[i].lat+clubs[i+1].lat)/2, lon:(clubs[i].lon+clubs[i+1].lon)/2, cluster:true})
-        i++
-      }else{
-        clustersArr.push(arr[i])
-      }}
-     }
-     if(clubs.length!=clustersArr.length){
-      // setClusters(clustersArr)
-     }
+        superclusterRef.current = new Supercluster({
+          radius: 35, // Расстояние в пикселях для кластеризации
+          maxZoom: 16, // Максимальный уровень масштабирования для кластеризации
+         
+        });
+    
+        // Преобразуем данные клубов в формат, понятный Supercluster
+        const points = clubs.map((club) => ({
+          type: 'Feature',
+          properties: { cluster: false, clubId: club.id, name: club.name, ava:club.ava, ruName:club.ruName },
+          geometry: {
+            type: 'Point',
+            coordinates: [club.lon, club.lat],
+          },
+        }));
+        // Загружаем данные в Supercluster
+        superclusterRef.current.load(points);
+        updateClusters();
+    
      
-    }, [zoom])
+    }, [])
+    const renderClusters = () => {
+      return clusters.map((cluster, idx) => {
+        const { geometry, properties } = cluster;
+        const [longitude, latitude] = geometry.coordinates;
+        
+        // console.log(latitude)
+        const isCluster = properties.cluster;
+        if(user&&showFav&&!user.favourite.includes(properties.clubId)){
+          return 
+        }
+        return(
+          <MarkerView
+        key={idx}
+         coordinate={[longitude, latitude]}
+         visible={true}
+         children={isCluster?
+          <View 
+          style={{borderWidth:5, borderColor:'#a9d9a9', height:48, width:48, borderRadius:24, backgroundColor:'#fff', zIndex:2, justifyContent:'center', alignItems:'center'}}>
+            <Pressable
+            style={{height:48, width:48,justifyContent:'center', alignItems:'center'}}
+            onPress={()=>{
+              if (zoom>=15.5){
+                setRBList(superclusterRef.current.getLeaves(properties.cluster_id))
+                RBRef.current.open()
+                return false
+              }
+              let expansionZoom = superclusterRef.current.getClusterExpansionZoom(cluster.properties.cluster_id)
+              let coordinates = cluster.geometry.coordinates
+              cameraRef.current.setCamera({
+                centerCoordinate: coordinates,
+                zoomLevel: expansionZoom+0.5,
+                animationDuration: 1000,
+              })
+            }}
+            >
+            <Text>{properties.point_count}</Text>
+            {zoom>=15.5&&
+            <Text 
+            // style={{transform:[{rotate:'90deg'}], marginLeft:3}}
+            >
+              &#x2026;
+              </Text>}
+            </Pressable>
+          </View>
+          :
+          <View 
+          style={{borderWidth:5, borderColor:'#a9d9a9', height:48, width:48, borderRadius:24, backgroundColor:'#fff', zIndex:2, justifyContent:'center', alignItems:'center'}}>
+            <Pressable
+            
+            style={{height:48, width:48,justifyContent:'center', alignItems:'center'}}
+            onPress={()=>{handleClickonClub(properties.clubId)}}
+            >
+              <View 
+            style={{height:52, width:52, borderWidth:1, borderColor:'transparent', overflow:'visible',  justifyContent:'center', alignItems:'center', borderRadius:26}}>
+            <Image 
+            width={48} height={48} style={{borderRadius:24}} source={{uri: properties.ava}}/>
+            {/* {club.shipping&&<MaterialCommunityIcons style={{padding:1, position:'absolute', bottom:0, right:0, zIndex:5,backgroundColor:club.shippingCost=='0'?'#5fb96b':'#6f6fb9', borderRadius:10}} name='car-hatchback' size={18} color={'#fff'}/>
+            } */}
+            </View>
+            </Pressable>
+          </View>
+          }
+          />
+        )
+      });
+    };
 
-// console.log('================!!')
-// console.log(clusters)
-// console.log(zoom/40)
     useEffect(()=>{
-       setResfresh(!refresh);
-    },[clubs])
-
+       cameraRef.current?.setCamera({
+        centerCoordinate: [location.longitude, location.latitude],
+        zoomLevel: 15,
+        animationDuration: 2000,
+       })
+    },[location])
     function getAngularDistance(lat1, lon1, lat2, lon2) {
       var R = 6371; // Радиус Земли в километрах
       var dLat = (lat2 - lat1) * Math.PI / 180;
@@ -76,6 +186,11 @@ const Maps = ({navigation, route}) => {
       var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return (c * R)/111.12 ;
     }
+    function getPixelDistance(x1, y1, x2, y2) {
+     
+      return (c * R)/111.12 ;
+    }
+
     useEffect(() => {
 
         let isMounted = true;
@@ -107,12 +222,26 @@ const Maps = ({navigation, route}) => {
 
        
       const handleSelectClub = (club)=>{
-
+          setLocation({latitude:club.lat, longitude:club.lon})
           YaRef.current?.setCenter({lon:club.lon, lat:club.lat}, 14, 0, 100, 1 )
       }
-      
   return (
-    <View style={{paddingHorizontal:15,  paddingBottom:0, flex:1, height:'100%'}}>
+    <View style={{paddingHorizontal:15,  paddingBottom:15, flex:1, height:'100%'}}>
+      <RBSheet
+      height={400}
+      closeOnPressBack
+      
+      // dragOnContent={true}
+      // draggable={true}
+      openDuration={500}
+      ref={RBRef}
+      >
+        <ScrollView style={{flex:1, backgroundColor:mainTheme.colorbackGround, paddingHorizontal:10}}>
+        {RBList.map((item,index)=>renderClubList(item.properties, index, handleClickonClub)
+          )
+        }
+        </ScrollView>
+      </RBSheet>
       <View style={{flexDirection:'row', borderTopRightRadius:25, borderTopLeftRadius:25, width:'100%', overflow:'visible', backgroundColor:'#c6c3c3'}}>
         <TouchableOpacity activeOpacity={1} onPress={()=>setShowfav(false)} style={[styles.favBtn, showFav?null:styles.favBtnActive]}>
           <View style={[styles.favBtnBack, !showFav?styles.favBtnBackActive:null]}></View>
@@ -141,118 +270,42 @@ const Maps = ({navigation, route}) => {
             >
 
 
-      <YaMap
-      ref={YaRef}
-      nightMode={false}
       
-      tiltGesturesEnabled={false}
-      rotateGesturesEnabled={false}
-      onMapLoaded={()=>{setIsvisible(true);}}
-      // onCameraPositionChangeEnd={({nativeEvent})=>{setZoom(nativeEvent.zoom)}}
-      onCameraPositionChange={event=> {if(event.nativeEvent.zoom!=zoom){
-        let zoom = event.nativeEvent.zoom
-        let clustersArr=[]
+      <MapView 
+      ref={mapRef}
+      onRegionIsChanging={(event)=>updateClusters(event)}
       
-        if(clubs){
-         let arr = clubs.map(el=>el)
-        //  arr.pop()
-        
-        const cluster = ()=>{
-          // let countClusters=0
-          for(let i=0; i<arr.length-1; i++){
-            
-            // console.log(arr)
-            for(j=i+1; j<arr.length; j++){
-                let dist = getAngularDistance(arr[i].lat, arr[i].lon, arr[j].lat, arr[j].lon)
-              if(dist<(((dist>0.1?7:5)/(zoom))-0.44)){
-            // console.log('dist'+(arr[i].distance||0+dist))    
-            // console.log('count'+((arr[i].count||1)+(arr[j].count||1)))    
-             
-           newEl = {
-             lat: (arr[i].lat+arr[j].lat)/2,
-             lon:(arr[i].lon+arr[j].lon)/2,
-             cluster:true,
-             count:(arr[i].count||1)+(arr[j].count||1),
-             distance:dist }
-           arr.splice(i,1, newEl)
-           arr.splice(j,1)
-        
-           cluster()
-          
-                 }
-
-              }
-          }
-
-
-            // console.log(getAngularDistance(arr[i].lat, arr[i].lon, arr[i+1].lat, arr[i+1].lon))
-         
-        // if(countClusters!=0){cluster()}
-        }
-        cluster()
-          if(clusters.length!=arr.length){
-          // console.log('--++---')
-         setClusters(arr)
-        }   
-        }
-        
-      }}}
-      showUserPosition={false}
-      style={{
-
-          width:'100%',
-          height:'105%'
-        }}
-      // showUserPosition={!isUserinclub}
-      followUser={false}
-      initialRegion={isCoords ?{
-        lat: 56.4,
-        lon: 94.6,
-        // zoom:zoom,
-        azimuth:0,
-        tilt:0
-    }:null}
-      >
-      {  clusters.map((club, id)=>{
-        // console.log(user)
-        if(user&&showFav&&!user.favourite.includes(club.cid)){
-          return 
-        }
-        let idx = Math.floor(Math.random() * (99999 - 10000 + 1)) + 10000;
-        return(
-        <Marker
- 
-         visible={true}
-         children={club.cluster?
-          <View style={{borderWidth:5, borderColor:'#a9d9a9', height:48, width:48, borderRadius:24, backgroundColor:'#fff', zIndex:2, justifyContent:'center', alignItems:'center'}}>
-            <Text>{club.count}</Text>
-          </View>
-          :
-          <View style={{height:52, width:52, borderWidth:1, borderColor:'transparent', overflow:'visible',  justifyContent:'center', alignItems:'center', borderRadius:26}}>
-          <Image 
-          width={48} height={48} style={{borderRadius:24}} source={{uri: club.ava}}/>
-          {club.shipping&&<MaterialCommunityIcons style={{padding:1, position:'absolute', bottom:0, right:0, zIndex:5,backgroundColor:club.shippingCost=='0'?'#5fb96b':'#6f6fb9', borderRadius:10}} name='car-hatchback' size={18} color={'#fff'}/>
-}
-          </View>}
-          key={idx}
-          // source={{uri: club.ava }}
-          onPress={async ()=>{
-          if(club.cluster){
-            YaRef.current?.setCenter({lon:club.lon, lat:club.lat}, (club.distance>0.1?12:9)/(club.distance+0.64), 0, 100, 1 )
-          }else{
-            hideAnimation();
-            setTimeout(async()=>{
-              let clubData = await getClubDataById(club.id); navigation.navigate('Club',{club: clubData})
-            },300)
-            }}}
-          point={{lat: club.lat,  lon: club.lon}}
+      surfaceView
+      // contentInset={20}
+      rotateEnabled={false}
+      logoEnabled={false}
+      style={{ flex: 1 }} >
+         <Camera
+            ref={cameraRef}
+            maxZoomLevel={16}
+            // zoomLevel={15}
+            // centerCoordinate={[location?.longitude||94.6, location?.latitude||56.4]}
           />
-          
-          )
-
-
-        })}
-       </YaMap>
+          {renderClusters()}
+       
+           
+          <RasterSource
+              id="osm-raster-source"
+              tileUrlTemplates={OSM_RASTER_STYLE.sources.osm.tilesVector}
+              {...OSM_RASTER_STYLE.sources.osm}
+          >
+              <RasterLayer id="osm-raster-layer" style={{ rasterOpacity: 1 }} />
+            </RasterSource>
+            {/* <VectorSource
+              id="osm-raster-source"
+              url="https://demotiles.maplibre.org/tiles/tiles.json"
+              tileUrlTemplates={ OSM_RASTER_STYLE.sources.osm.tilesVector}
+              {...OSM_RASTER_STYLE.sources.osm}
+            >
+              <FillLayer id="osm-raster-layer" style={{ rasterOpacity: 1 }} />
+            </VectorSource> */}
+        
+      </MapView>
        </View>
        <View style={{flexDirection:'row', justifyContent:'flex-start', alignItems:'center', height:'15%',  width:'100%', marginTop:20, borderRadius:25, backgroundColor:'#fff', borderTopWidth:2, borderStartWidth:1, borderRightWidth:1, borderColor:'#bbb', margin:0}}>
        <FlatList
@@ -271,7 +324,7 @@ const Maps = ({navigation, route}) => {
        style={{flexDirection:'column', alignItems:'center'}}
        onPress={()=>{handleSelectClub(item)}}
        >
-        <Image width={58} height={58} style={{borderRadius:29, marginHorizontal:10}} source={{uri: item.ava}}/>
+        <Image width={58} height={58} style={styles.clubImage} source={{uri: item.ava}}/>
         <Text ellipsizeMode='tail' numberOfLines={1} style={{textAlign:'center', color:'#000', fontSize:10, width:58, overflow:'hidden'}}>{item.ruName}</Text>  
        </Pressable>)}
        }
@@ -292,6 +345,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#c6c3c3",
     borderTopLeftRadius:25,
     borderTopRightRadius:25
+  },
+  clubImage:{
+    borderRadius:29, 
+    marginHorizontal:10
   },
   favBtnActive: {
     backgroundColor: "#fff",

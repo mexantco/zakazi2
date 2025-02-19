@@ -1,5 +1,5 @@
-import { StyleSheet, Text, View, FlatList, Image, TouchableOpacity, Modal, TextInput, Alert } from "react-native";
-import React from "react";
+import { StyleSheet, Text, View, FlatList, Image, TouchableOpacity, Modal, TextInput, Alert, Dimensions } from "react-native";
+import React, { memo } from "react";
 import { Avatar, Divider, TouchableRipple } from "react-native-paper";
 import { chats as dummyChats } from "../../seeds/DummyData";
 import { useState } from "react";
@@ -157,19 +157,15 @@ const Products = ({route})=>{
   const [modalData, setModalData] = useState({})
   const clubb = useSelector(state=>state.clubs.clubData)
   
-  useEffect(()=>{if(uData.uid==owner){setIsmy(true)}},[uData]);
-  console.log(additionsToAdd)
   useEffect(()=>{
-    const asFn = async()=>{
-          const q = query(doc(db, "club", cid))
-          onSnapshot(q, (querySnapshot)=>{
-          let clubData = querySnapshot.data()
-          dispatch(setClubData({clubData:clubData}))
-        })
-      
-    }
-    asFn();
- },[refresh])
+    navigation.setOptions({
+      title:`Меню ${clubb?.ruName}`
+    })
+    if(uData.uid==owner){setIsmy(true)}
+  
+  },[uData]);
+  console.log(additionsToAdd)
+  
 
   useEffect(()=>{
    
@@ -386,6 +382,8 @@ const Products = ({route})=>{
     dispatch(setOrder({order: order?[...order, {id, num, name, img, cost, orderAdditions}]:[{id, num, name, img, cost, orderAdditions}]}))
 
   }
+  console.log('modalData.additions')
+  console.log(modalData.additions)
     console.log('modalData')
     console.log(modalData)
     return(
@@ -408,9 +406,9 @@ const Products = ({route})=>{
       visible={modal2}
       >{loading?(<>
       {loader()}
-  </>):(<>
-        <BlurView intensity={30} tint='dark' style={{flex:1, flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
-            <ScrollView >
+      </>):(<>
+        <View  style={{flex:1, backgroundColor:mainTheme.colorbackGround, flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
+            <ScrollView style={{height:Dimensions.get('window').height}}>
               <View style={{flex:1, flexDirection:'column', justifyContent:'center', alignItems:'center',paddingBottom:50}}>
             <Image
             style={{height:300, width:300, marginVertical:20}}
@@ -436,8 +434,9 @@ const Products = ({route})=>{
                 style={{}}
                 horizontal
                 data={additions}
-                renderItem={({item})=>{console.log(item);return(<>
-                <View style={{flexDirection:'column', justifyContent:'center', alignItem:'center', marginHorizontal:20}}>
+                keyExtractor={(item, index) => index}
+                renderItem={({item, index})=>{console.log(item);return(<>
+                <View key={index} style={{flexDirection:'column', justifyContent:'center', alignItem:'center', marginHorizontal:20}}>
                   <Text style={{textAlign:'center'}}>{item.name}</Text>
                   <BouncyCheckbox  
                     disableText
@@ -462,7 +461,7 @@ const Products = ({route})=>{
             <Text style={styles.textinfo}>{modalData.name}</Text>
             <Text style={[styles.textinfo, { paddingHorizontal:10}]}>{modalData.opis}</Text>
             <Text style={styles.textinfo}>{modalData.cost+'р.'}</Text>
-            <Text style={{marginVertical:10}}>Выберите добавки:</Text>
+            {(modalData.additions&&modalData.additions.length>0)&&(<><Text style={{marginVertical:10}}>Выберите добавки:</Text>
             <FlatList
                 style={{}}
                 horizontal
@@ -484,11 +483,8 @@ const Products = ({route})=>{
                     }} 
                   />
                   </View></>)}}
-                />
+                /></>)}
             </>)}
-            
-            
-            
             {isMy?(<>
             <View style={{flexDirection:'row', gap:10}}>
               <TouchableOpacity
@@ -510,68 +506,16 @@ const Products = ({route})=>{
             </View>
             </ScrollView>
             
-            <TouchableOpacity
-            style={[styles.btnstyle, {position:'absolute', bottom:0, width:200, marginBottom:0, borderBottomLeftRadius:0,borderBottomRightRadius:0, backgroundColor:'#bbb'}]}
-            onPress={()=>setModal2(false)}>
-              <Text style={styles.btntextstyle}>Закрыть</Text>
-            </TouchableOpacity>
+            
 
-        </BlurView></>)}
+        </View></>)}
+        <TouchableOpacity
+            style={[styles.btnstyle, {alignSelf:'center', position:'absolute', bottom:0, width:200, marginBottom:0, borderBottomLeftRadius:0,borderBottomRightRadius:0, backgroundColor:'#bbb'}]}
+            onPress={()=>{setModal2(false); setNum(1)}}>
+            <Text style={styles.btntextstyle}>Закрыть</Text>
+        </TouchableOpacity>
       </Modal>
-      <Modal
-      visible={modal}
-
-      >{loading?(<>
-     {loader()}
-      </>):(<>
-      <ScrollView
-      contentContainerStyle={{justifyContent:'flex-start', gap:20, alignItems:'center', flex:1}}
-        style={{flex:1, height:'100%', flexDirection:'column',  backgroundColor:'#b1b1b1'}}
-        >
-          <TouchableOpacity
-          onPress={()=>pickImageAsync()}
-          style={[styles.btnstyle, {width:100, height:100, borderRadius:5}, uri&&{backgroundColor:'#badcfc'}]}
-          labelStyle={{fontSize:10}}
-          ><Text style={styles.btntextstyle}>{uri?"фото выбранно. можно изменить":"выберите фото"}</Text></TouchableOpacity>
-          <TextInput onChangeText={setName} style={styles.textinfoInput} placeholder="Название"></TextInput>
-          
-          <TextInput numberOfLines={5} onChangeText={setOpis} multiline={true} style={styles.textinfoInput} placeholder="Описание"></TextInput>
-          <View style={{height:100}}>
-                <Text>Добавки к продукту</Text>
-                <FlatList
-                style={{width:'100%'}}
-                horizontal
-                data={additions}
-                renderItem={({item})=>{console.log(item);return(<>
-                <View style={{flexDirection:'column', justifyContent:'center', alignItem:'center', marginHorizontal:20}}>
-                  <Text style={{textAlign:'center'}}>{item.name}</Text>
-                  <BouncyCheckbox  
-                    disableText
-                    style={{alignSelf:'center'}}
-                    isChecked={additionsToAdd.length>0&&additionsToAdd.some(el=>el.id==item.id)} 
-                    onPress={()=>{
-                     
-                      setAdditionsToAdd(prevState=>(additionsToAdd.length>0&&additionsToAdd.some(el=>el.id==item.id)?
-                      [...prevState].filter(el=>el.id!=item.id):
-                      [...prevState, item]
-                      ))
-                    }} 
-                  />
-                </View></>)}}
-                />
-          </View>
-          <TextInput keyboardType='number-pad' onChangeText={setCost} style={[styles.textinfoInput,{width:100}]} placeholder="Цена"></TextInput>
-          <Button
-          onPress={()=>addDrink(false)}
-          
-          >Добавить</Button>
-          <TouchableOpacity
-            onPress={()=>{setModal(false); setAdditionsToAdd([])}}
-            style={[styles.btnstyle, {position:'absolute', bottom:0, width:200, marginBottom:0, borderBottomLeftRadius:0,borderBottomRightRadius:0, backgroundColor:'#bbb'}]}
-          ><Text style={styles.btntextstyle}>Закрыть</Text></TouchableOpacity>
-          </ScrollView></>)}
-
-      </Modal>
+      
         {isMy?(<>
         <TouchableOpacity
         onPress={()=>navigation.push('MyClubs' ,{clubs: uData.myClubs, copy:clubb.cid})}
@@ -598,14 +542,16 @@ const Products = ({route})=>{
 
 
       <FlatList
-        //contentContainerStyle={{flexDirection:'row', justifyContent:'space-around',paddingBottom: 30 }}
+        // contentContainerStyle={{flexDirection:'row', justifyContent:'space-around',paddingBottom: 30 }}
         showsVerticalScrollIndicator={false}
         numColumns={2}
+
         showsHorizontalScrollIndicator={false}
         data={bar}
         keyExtractor={(item, index) => index}
-        renderItem={({ item }) => uData.uid==owner||item.availible?(
-        <><Napitok press={()=>{
+        renderItem={({ item, index }) => uData.uid==owner||item.availible?(
+        <>
+        <Napitok key={index} press={()=>{
           setModalData({
             id:item.id,
             img:item.img,
@@ -624,4 +570,4 @@ const Products = ({route})=>{
     </View>
     )
   }
-export default Products
+export default memo(Products)

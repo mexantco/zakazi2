@@ -17,7 +17,7 @@ import { getClubDataById } from "../../utils/club";
 const db = getFirestore();
 
 const Club = ({ navigation,club, index, copy }) => {
-  
+ 
   if(club==copy){return false}
   // const db = getFirestore();
   //   const uData = useSelector((state) => state.user.userData);
@@ -58,7 +58,6 @@ const Club = ({ navigation,club, index, copy }) => {
     'Gilroy-Regular': require('../../fonts/Gilroy-Regular.ttf'),
     'Gilroy-Semibold': require('../../fonts/Gilroy-Semibold.ttf'),
    });
-  console.log(clubData);
   if(clubData==null){return false}
   return (
     <>
@@ -85,37 +84,10 @@ const Club = ({ navigation,club, index, copy }) => {
 };
 
 const MyClubs = ({navigation, route}) => {
-  const {clubs, copy}=route.params
+  const {copy, choose}=route.params
   
-//   const uData = useSelector((state) => state.user.userData);
-//   useEffect(()=>{
-
-//     
-//     const asFn= async ()=>{
-//       const q = query(
-//         collection(db, "staff")
-//         ,where('club', '==', cid)
-//         );
-//         const querySnapshot = await getDocs(q);
-//         const unsubscribe = onSnapshot(q, (querySnapshot)=>{
-//           let staffArr = [];
-//           querySnapshot.forEach((d)=>{
-//           if(d.data().name){
-//             let doc = d.data();
-//             doc.id = d.id;
-//           staffArr.push(doc);}
-//         })
-//         setStaff(staffArr);
-//         })
-
-
-//     }
-
-//     asFn();
-//   },[])
-
-  // const [chats, setChats] = useState(dummyChats);
-  // console.log(chats2);
+  const clubs = useSelector((state) => state.user.userData.myClubs);
+console.log(clubs)
   return (
     <View
 
@@ -131,6 +103,7 @@ const MyClubs = ({navigation, route}) => {
         overflow: "hidden",
       }}
     >
+      <Text style={{textAlign:'center', marginVertical:15}}>{choose?'Выберите магазин':'Ваши магазины'}</Text>
     {/* <TouchableOpacity
             onPress={()=>{addBarmen()}}
             style={{
@@ -150,8 +123,8 @@ const MyClubs = ({navigation, route}) => {
         data={clubs}
         keyExtractor={(item, index) => index}
         renderItem={({ item, index }) => 
-        <Club club={item} index={index+1} navigation={navigation} copy={copy} />}
-      /></>):(<><Text>Вы еще не добавили продавцов.</Text></>)}
+        <Club  club={item} index={index+1} navigation={navigation} copy={copy} />}
+      /></>):(<><Text>У вас нет магазинов</Text></>)}
 
     </View>
   );

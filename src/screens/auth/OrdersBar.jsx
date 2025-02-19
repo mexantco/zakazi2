@@ -25,7 +25,10 @@ import {
   onSnapshot,
   doc,
   updateDoc,
-  increment
+  increment,
+  queryEqual,
+  Query,
+  
 } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
 import { useDispatch, useSelector } from "react-redux";
@@ -44,6 +47,9 @@ import RBSheet from "react-native-raw-bottom-sheet";
 import { TextInput } from "react-native-gesture-handler";
 import Button from "../../components/ui/Button";
 import sendPushNotification from "../../utils/push";
+import {Switch} from '@petros-g/react-native-switch';
+import { changeWorking, getClubDataById } from "../../utils/club";
+import { mainTheme } from "../../config/theme";
 
 const db = getFirestore();
 const statuses = {
@@ -55,8 +61,7 @@ const statuses = {
   5: "Отменен продавцом"
 };
 const inProcess = async (id, status, cid, reason, from) => {
-  console.log(cid)
-  console.log(id)
+  
   let count;
   const snapshot = await getDoc(doc(db, "orders", id));
   if (!snapshot.exists()) {
@@ -97,14 +102,12 @@ const inProcess = async (id, status, cid, reason, from) => {
         status: status,
       });
   }else{
-    console.log('111111')
-    console.log(id)
+   
     await axios.get('https://clubnight.ru/order_confirm?order_id='+id);
 
   }
   if(status==2){
     let docRef = await getDoc(doc(db, 'users', from))
-    console.log(docRef)
     let token = docRef.data().pushToken
     sendPushNotification(token, 'Ваш заказ готов.', 'Покажите промокод продавцу', {type:'order_ready',order_id:id})
   }
@@ -119,6 +122,7 @@ const People = ({ navigation, people, index, cid }) => {
   const [order, setOrder] = useState({ name: "", time: 0 });
   const [modal, setModal] = useState(false);
   const [modal2, setModal2] = useState(false);
+  const [unread, setUnread] = useState(0)
   const[orderNum, setOrderNum] = useState(null)
   const uData = useSelector((state) => state.user.userData);
   let [fontsLoaded] = useFonts({
@@ -128,13 +132,26 @@ const People = ({ navigation, people, index, cid }) => {
     "Gilroy-Semibold": require("../../fonts/Gilroy-Semibold.ttf"),
   });
   useEffect(() => {
+    const q = query(collection(db, 'chats'), where('order', '==', people.id))
+    const unsibscribe = onSnapshot(q,async(querySnapshot)=>{
+      let unreadCount = 0
+      querySnapshot.forEach((doc)=>{
+
+        doc.data().messages.forEach(el=>{
+          if(el.unread&&el.sender_id!=people.id){
+            unreadCount+=1
+          }
+        })
+      })
+      setUnread(unreadCount)
+    })
     setOrder(people);
   }, [people]);
   let date = new Date(Math.floor(order.time * 1000)).toLocaleTimeString();
   
   return (
     <>
-      <Modal visible={modal}>
+      <Modal style={{borderWidth:3, backgroundColor:'red', flex:1, height:500}} visible={modal}>
         <RBSheet
         openDuration={100}
         // dragOnContent={true}
@@ -167,7 +184,7 @@ const People = ({ navigation, people, index, cid }) => {
             flexDirection: "column",
             justifyContent: "center",
             alignItems: "center",
-            paddingVertical: 50,
+            paddingTop: 50,
           }}
         >
           <ScrollView style={{width:'80%' }}>
@@ -272,13 +289,13 @@ const People = ({ navigation, people, index, cid }) => {
               <Text style={{ fontSize: 20, color: "#ffffff" }}>Закрыть</Text>
             </TouchableOpacity>
           </View>
-          <Chat order={order.id} uid={order.from} modal={modal2}/>
+          {order.status!=3&&<Chat order={order.id} uid={order.from} modal={modal2}/>}
           
         </View>
       </Modal>
       <View
         style={{
-          backgroundColor: !index % 2 === 0 ? "#ffffff0" : "#ffffff00",
+          backgroundColor: !index % 2 === 0 ? "#ffffff00" : "#ffffff00",
         }}
       >
         <TouchableRipple
@@ -312,6 +329,12 @@ const People = ({ navigation, people, index, cid }) => {
                 >
                   № {people.number}
                 </Text>
+                {unread>0&&
+                <View>
+                  <Ionicons name="chatbox-sharp" size={25} color={'#bbb'}/>
+                  <Text style={{position:'absolute', right:5, bottom:0, fontWeight:'bold'}}>{unread}</Text>
+                </View>}
+                
                 <Text style={styles.textStatus}>{statuses[people.status]}</Text>
               </View>
             </View>
@@ -325,15 +348,23 @@ const People = ({ navigation, people, index, cid }) => {
   );
 };
 
-const Orders = ({ navigation, route }) => {
+const OrdersBar = ({ navigation, route }) => {
   const [modal, setModal] = useState(false);
   const [hasPermission, setHasPermission] = useState(null);
   const [people, setUsers] = useState();
   const uData = useSelector((state) => state.user.userData);
-
+  const [isWorking, setIsWorking] = useState(false)
   useEffect(() => {
     const asFn = async () => {
-      const db = getFirestore();
+      
+      //const clubData = await getClubDataById(uData.roleClub)
+      const q2 = query(doc(db, 'club', uData.roleClub))
+      const unsubscribeClub = onSnapshot(q2, async (querySnapshot)=>{
+          // console.log(await querySnapshot.data().working)
+          setIsWorking(await querySnapshot.data().working)
+      })
+      
+      
       const q = query(
         collection(db, "orders"),
         where("club", "==", uData.roleClub)
@@ -361,15 +392,15 @@ const Orders = ({ navigation, route }) => {
 
     getBarCodeScannerPermissions();
   }, []);
-  console.log(people);
   // const [chats, setChats] = useState(dummyChats);
   return (
-    <View>
+    <View >
       <Modal transparent={true} visible={modal}>
-        <BlurView
+        <View
+        experimentalBlurMethod='dimezisBlurView'
           tint="dark"
           intensity={40}
-          style={{ flex: 1, paddingVertical: 30 }}
+          style={{ flex: 1, paddingVertical: 30, backgroundColor:'#555' }}
         >
           <View
             style={{
@@ -417,10 +448,35 @@ const Orders = ({ navigation, route }) => {
               color={"#d5cefb"}
             />
           </TouchableOpacity>
-        </BlurView>
+        </View>
       </Modal>
-      <TouchableOpacity
-        style={{ height: 70, alignItems: "center" }}
+      <View style={{flexDirection:'row', width:'100%', gap:5, backgroundColor:'#bbb'}}>
+        <View style={{backgroundColor:'#ffffff70', paddingHorizontal:10,flex:1,width:'100%', height:70,justifyContent:'space-between', alignItems:'center', flexDirection:'row'}}>
+              <Text style={{color:!isWorking?mainTheme.colorWarning:mainTheme.colorDarkText, marginHorizontal:10, width:100, flex:1}}>Магазин {isWorking?'работает':'не работает'}</Text>
+              {/* <Switch
+                  activeText={'On'}
+                  inActiveText={'Off'}
+                  value={isWorking}
+                  onValueChange={()=>{changeWorking(isWorking, uData.roleClub); setIsWorking(!isWorking)}}
+                  // enableDrag
+                  trackWidth={50}
+                  trackHeight={20}
+                  circleSize={25}
+                  circleOffset={3}
+                  circleActiveColor="white"
+                  trackActiveColor="#42adff"
+                  animationDuration={200}
+                /> */}
+              <TouchableOpacity 
+                style={{backgroundColor:isWorking?mainTheme.colorWarning:'#c9c9c9',...mainShadow, flex:1, padding:2, borderRadius:5}}
+                onPress={async ()=>{changeWorking(isWorking, uData.roleClub); setIsWorking(!isWorking)}}
+              >
+                <Text style={{fontSize:11,textAlign:'center'}}>{isWorking?'остановить ':'возобновить '}</Text>
+                <Text style={{fontSize:14,textAlign:'center'}}>работу</Text>
+              </TouchableOpacity>
+          </View>
+        <TouchableOpacity
+        style={{ backgroundColor:'#ffffff70',flex:1, height: 70, alignItems: "center" }}
         onPress={() => {
           setModal(true);
         }}
@@ -441,6 +497,8 @@ const Orders = ({ navigation, route }) => {
           color={"#000"}
         />
       </TouchableOpacity>
+      </View>
+      
       <View
         style={{
           marginHorizontal: 15,
@@ -483,7 +541,7 @@ const Orders = ({ navigation, route }) => {
   );
 };
 
-export default Orders;
+export default OrdersBar;
 
 const styles = StyleSheet.create({
   textStatus: { 

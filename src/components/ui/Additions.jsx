@@ -272,11 +272,6 @@ const Additions = ({route})=>{
   };
 
 
-  const addToOrder = async (id, num, name, img, cost)=>{
-    // setOrderArr([...orderArr,{id, num, name, img, cost}])
-    dispatch(setOrder({order: [...order, {id, num, name, img, cost}]}))
-
-  }
 
     return(
       <View
@@ -371,7 +366,7 @@ const Additions = ({route})=>{
         showsHorizontalScrollIndicator={false}
         data={bar}
         keyExtractor={(item, index) => index}
-        renderItem={({ item }) => <Addition press={()=>{
+        renderItem={({ item, index }) => <Addition key={index} press={()=>{
           setModalId(item.id); 
           setModalUri(item.img); 
           setModalName(item.name);

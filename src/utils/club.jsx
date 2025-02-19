@@ -14,7 +14,20 @@ export const exitClub = async (uid, cid) => {
   await updateDoc(doc(db, "users", uid),{club:''});
 
 };
+export const changeWorking = async(isWorking, id)=>{
+  if(isWorking){
+    await updateDoc(doc(db, "club", id),{
+      working:false
+    })
+  }else{
+    await updateDoc(doc(db, "club", id),{
+      working:true
+    })
+  }
+  
+  
 
+}
 export const getClubDataById = async (cid) => {
   const firestore = getFirestore();
   const docRef = doc(firestore, "club", cid);

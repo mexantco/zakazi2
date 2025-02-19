@@ -22,7 +22,6 @@ const OrderDetail = ({route, navigation})=>{
           <Chat mode='view' uid={order.id} unr={0}/>:
           <ScrollView style={{ width:'100%'}}>
           {order.order&&JSON.parse(order.order).map((item, index)=>{
-            console.log(item)
                       return(<>
                     <View key={index} style={{flexDirection:'row', justifyContent:'space-between', width:'100%', borderBottomWidth:1}}>
                       <Text style={{color:'#000'}}>{item.name}</Text>

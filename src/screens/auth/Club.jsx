@@ -1,5 +1,5 @@
 import {PanResponder, View, Text, Dimensions, TouchableOpacity, StyleSheet, ImageBackground, Image, StatusBar} from 'react-native'
-import React,{useEffect, useRef, useState} from 'react'
+import React,{memo, useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import Users from "./Users";
 import Bar from "./Bar";
 import Order from "./Order";
@@ -7,7 +7,7 @@ import Clubinfo from "./ClubInfo"
 import Staff from './Staff';
 import { useFonts } from 'expo-font';
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { getFirestore } from 'firebase/firestore';
+import { doc, getFirestore, onSnapshot, query } from 'firebase/firestore';
 import { useFocusEffect, useNavigationState } from '@react-navigation/native';
 // import Carousel from 'react-native-reanimated-carousel';
 import  Animated, {useSharedValue, interpolate, useAnimatedStyle, withTiming, Easing, withDelay, withDecay, interpolateColor} from 'react-native-reanimated';
@@ -18,6 +18,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { mainShadow } from "../../components/ui/ShadowStyles";
 import { Ionicons, AntDesign, Entypo, MaterialCommunityIcons, Foundation, FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { setOrder } from '../../reducers/user';
+import RenderButton, { RenderButtonBack } from '../../components/ui/RenderButton';
+import { setClubData } from '../../reducers/clubs';
 
 const sbar = StatusBar.currentHeight;
 const styles = StyleSheet.create({
@@ -109,15 +111,15 @@ const Club = ({route, navigation}) => {
   const club = useSelector(state=>state.clubs.clubs).filter(el=>el.cid==clubId)[0]
   
   const location = route.params.location;
-  const carouselRef = useRef(null);
-  const [active, setActive] = useState(0);
-  const [scrollPos, setScroll] = useState(0);
+  console.log('location')
+  console.log(location)
   const width = Dimensions.get('window').width;
   const height = Dimensions.get('window').height;
   const userData = useSelector(state=>state.user.userData)
   const order = useSelector((state) => state.user.order);
   const dispatch = useDispatch()
   const tabBarTranslateY = useSharedValue(100)
+  const db = getFirestore();
 
   const animBottom  = useAnimatedStyle(()=>{
     return{
@@ -142,15 +144,21 @@ const Club = ({route, navigation}) => {
       easing: Easing.out(Easing.exp),
     })
   })
-  // useEffect(()=>{
-  //   navigation.addListener('beforeRemove', ()=>{
-  //     dispatch(setOrder({order: []}))
-  //   })
+  useEffect(()=>{
+    navigation.addListener('beforeRemove', ()=>{
+      dispatch(setOrder({order: []}))
+    })
+
     
-  // },[])
+      const q = query(doc(db, "club", clubId))
+      onSnapshot(q, (querySnapshot)=>{
+      
+      let clubData = querySnapshot.data()
+      dispatch(setClubData({clubData:clubData}))
+    })
+      },[])
   const renderButton  = (props, name, icon, size)=>{
-    console.log('--++--')
-    console.log(order)
+ 
     return(
       <Animated.View style={[styles.tabBtnContainer, animBottom]}>
 
@@ -189,12 +197,16 @@ const Club = ({route, navigation}) => {
     return (
       <View
  style={{ flex: 1,  flexDirection:'column', justifyContent:'flex-start' }}>
+  <View style={{position:'absolute', bottom:5, left:20}}>
+      <RenderButtonBack animBottom={animBottom} onPress={()=>{navigation.goBack()}} name='Главная' icon='arrow-left' size={40} />
+  </View>
         <Tab.Navigator
 
 screenOptions={{
   swipeEnabled: false,
 
   tabBarStyle: {
+    marginLeft:70,
     paddingHorizontal:20,
     zIndex:2,
     height:90,
@@ -212,7 +224,8 @@ screenOptions={{
 
   options={{
     
-    tabBarButton:(props)=>renderButton(props, 'Меню', 'cutlery', 40),
+    // tabBarButton:(props)=>renderButton(props, 'Меню', 'cutlery', 40),
+    tabBarButton:(props)=><RenderButton animBottom={animBottom} props={useMemo(()=>props,[props.accessibilityState.selected])} name='Меню' icon='cutlery' size={40} />,
     headerShown:false,
     title: "Меню" }}
 />
@@ -221,8 +234,7 @@ name="ClubInfo"
  component={Clubinfo}
  initialParams={{club: club}}
   options={{
-
-      tabBarButton:(props)=>renderButton(props, 'Про', 'info', 40),
+      tabBarButton:(props)=><RenderButton animBottom={animBottom} props={useMemo(()=>props,[props.accessibilityState.selected])} name='Про' icon='info' size={40} />,
       headerShown:false,
       title:'Про'
      }} />
@@ -232,8 +244,7 @@ name="ClubInfo"
  component={Staff}
  initialParams={{cid: club.cid}}
   options={{
-
-      tabBarButton:(props)=>renderButton(props, 'Персонал', 'users', 40),
+      tabBarButton:(props)=><RenderButton animBottom={animBottom} props={useMemo(()=>props,[props.accessibilityState.selected])} name='Персонал' icon='users' size={40} />,
       headerShown:false,
       title:'Персонал'
      }} />
@@ -246,8 +257,7 @@ name="ClubInfo"
         component={Order}
         
         options={{
-          tabBarButton:(props)=>renderButton(props, 'Заказ', 'list', 40),
-          
+          tabBarButton:(props)=><RenderButton props={useMemo(()=>props,[props.accessibilityState.selected])} name='Заказ' icon='list' size={40} animBottom={animBottom} order={order}/>,
           headerShown:false,
           title: "Заказы" }}
       />

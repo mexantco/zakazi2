@@ -3,7 +3,6 @@ import QRCode from "react-native-qrcode-svg"
 
 const OrderQr = ({route})=>{
     const {order_id} = route.params
-    console.log(route)
     return(
         <View style={{justifyContent:'center', alignItems:'center', flex:1}}>
             <QRCode

@@ -10,8 +10,8 @@ const Statistic = ({route})=>{
     const db = getFirestore()
     const {cid} = route.params
     const [ordersArr,setOrders] = useState([])
-    console.log('orders')
-    console.log(ordersArr)
+    // console.log('orders')
+    // console.log(ordersArr)
     useEffect(()=>{
         const asyncFn = async ()=>{
         let arr = []
@@ -22,12 +22,11 @@ const Statistic = ({route})=>{
         const orders = await  getDocs(q)
         
         orders.forEach(element => {
-            console.log('ddd')
-            arr.push(element.data())
+            if(element.data().status==3){
+            arr.push(element.data())}
 
         });
-        console.log('arr')
-        console.log(arr)
+        
         setOrders(arr)
         }
         asyncFn()

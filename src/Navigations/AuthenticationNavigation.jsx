@@ -41,6 +41,8 @@ import MyClubs from "../screens/auth/MyClubs";
 import customHeader from "../components/ui/customHeader";
 import OrderDetail from "../screens/auth/OrderDetail";
 import HeaderCustom from "../components/ui/Header";
+import Loader from "../components/ui/Loader";
+import { setUserData } from "../reducers/user";
 
 const Stack = createStackNavigator();
 const AuthenticationNavigation = () => {
@@ -51,8 +53,24 @@ const AuthenticationNavigation = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const firestore = getFirestore();
-
+  console.log('userData')
+  console.log(userData)
   const auth = getAuth();
+
+  useEffect(()=>{
+    const qUser = query(
+      collection(firestore, "users"),
+      where("uid", "==", userData.uid)
+    );
+    const unsibscribe = onSnapshot(qUser, async (querySnapshot)=>{
+      querySnapshot.forEach(async (doc) => {
+           dispatch(setUserData({ userData: doc.data() }));
+                  
+                });       
+                  
+    });
+  },[])
+
   useEffect(() => {
     if (auth?.currentUser) {
       const q = query(
@@ -71,22 +89,15 @@ const AuthenticationNavigation = () => {
         );
       });
       
-      onAuthStateChanged(auth, async (user) => {
-        console.log(user.emailVerified)
-        if (!user) {
-          unsubscribe();
-          signOut(getAuth())
-        }
-        if(user){
+        
         let timer = setInterval(async ()=>{
-          await user.reload()
-          if(user.emailVerified==true){
+          await auth?.currentUser.reload()
+          if(auth?.currentUser.emailVerified==true){
             setVerify(true);
             clearInterval(timer)
           }
-          }, 2000)}
+          }, 2000)
           
-      });
     }
       // setTimeout(setTimerout2(true), 2100)
   }, [auth]);
@@ -96,12 +107,13 @@ const AuthenticationNavigation = () => {
     'Nazca': require('../fonts/Nazca.ttf'),
     'Gilroy-Semibold': require('../fonts/Gilroy-Semibold.ttf'),
    });
-  if (verify==false){
-    return(
-      <Text>Please Verify</Text>
-    )
-  }
+  // if (verify==false){
+  //   return(
+  //     <Loader/>
+  //   )
+  // }
   return (
+    
     <SafeAreaView
       style={{
         flex: 1,
@@ -111,6 +123,7 @@ const AuthenticationNavigation = () => {
         ...mainShadow,
       }}
     >
+    {/* <Loader visible={verify!=true}/> */}
       {/* <View>
         <Text>{`Балланс: ${userData.ballance}`}</Text>
       </View> */}
@@ -121,19 +134,19 @@ const AuthenticationNavigation = () => {
        
         options={{
         
-          header: (props) => (
-            <View
-              style={{
-                backgroundColor:'transparent',
-                marginHorizontal: 20,
-                paddingTop: 20,
-                height: 100,
-              }}
-            >
+          // header: (props) => (
+          //   <View
+          //     style={{
+          //       backgroundColor:'transparent',
+          //       marginHorizontal: 20,
+          //       paddingTop: 20,
+          //       height: 100,
+          //     }}
+          //   >
               
-            </View>
+          //   </View>
             
-          ),
+          // ),
           headerShown:false
         }}
       />
@@ -163,11 +176,11 @@ const AuthenticationNavigation = () => {
       <Stack.Screen 
       name="MyClubs" 
       component={MyClubs} 
-      options={{
-        animationEnabled:false,
-        title:'Заказы',
-        header:()=>(<HeaderCustom name='Мои Магазины'/>)
-      }}
+      // options={{
+      //   animationEnabled:false,
+      //   title:'Заказы',
+      //   header:()=>(<HeaderCustom name='Мои Магазины'/>)
+      // }}
       />
       <Stack.Screen name="Orders" component={Orders}
       options={{
@@ -211,11 +224,11 @@ const AuthenticationNavigation = () => {
       options={{
         headerShown:false,
         title:'',
-        headerLeft: null,
-        headerStyle:{
-          backgroundColor:'transparent',
-          elevation:0
-        }
+        // headerLeft: null,
+        // headerStyle:{
+        //   backgroundColor:'transparent',
+        //   elevation:0
+        // }
       }}
       name="Club" component={Club}/>
 

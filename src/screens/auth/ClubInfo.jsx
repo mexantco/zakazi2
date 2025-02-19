@@ -18,7 +18,7 @@ import { BlurView } from "expo-blur";
 import * as FileSystem from "expo-file-system";
 import * as Progress from "react-native-progress";
 import * as ImagePicker from "expo-image-picker";
-import { getClubDataById } from "../../utils/club";
+import { changeWorking, getClubDataById } from "../../utils/club";
 import DatePicker from "react-native-date-picker";
 import { useNavigation } from "@react-navigation/native";
 import { useFonts } from "expo-font";
@@ -37,6 +37,8 @@ import { useScrollToTop } from "@react-navigation/native";
 import {Switch} from '@petros-g/react-native-switch';
 import ProgressModal from '../../components/ui/ProgressModal';
 import Button from "../../components/ui/Button";
+import { mainTheme } from "../../config/theme";
+import { mainShadow } from "../../components/ui/ShadowStyles";
 const Clubinfo = ({ route }) => {
   const navigation = useNavigation();
   const [fontsLoaded] = useFonts({
@@ -48,8 +50,7 @@ const Clubinfo = ({ route }) => {
     "Gilroy-Thin": require("../../fonts/Gilroy-Thin.ttf"),
   });
   const club = route.params.club;
-  console.log('!!!!!!')
-  console.log(club);
+ 
   const [prog, setProg] = useState(0);
   const [modal, setModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -67,10 +68,14 @@ const Clubinfo = ({ route }) => {
   const [shippingCost, setShippingCost]= useState('');
   const switchRef = useRef(null)
   const [changed, setChanged] = useState(false)
+  const clubb = useSelector(state=>state.clubs.clubData)
+  
   //////animations
   
   /////////// delete banner
-
+  useEffect(()=>{
+    setClubdata(clubb)
+  }, [clubb])
   const removeBanner = async (url) => {
     setModal(true);
     setLoading(true);
@@ -85,7 +90,6 @@ const Clubinfo = ({ route }) => {
     setResfresh(!refresh);
   };
   const changeShipping = async()=>{
-    console.log(club.cid)
     if(isSHipping){
       await updateDoc(doc(db, "club", club.cid),{
         shipping:false
@@ -99,20 +103,7 @@ const Clubinfo = ({ route }) => {
     setIsShipping(!isSHipping)
 
   }
-  const changeWorking = async()=>{
-    if(isWorking){
-      await updateDoc(doc(db, "club", club.cid),{
-        working:false
-      })
-    }else{
-      await updateDoc(doc(db, "club", club.cid),{
-        working:true
-      })
-    }
-    
-    setIsWorking(!isWorking)
-
-  }
+  
   const changeShippingCost = async()=>{
     setChanged(false)
     if(shippingCost!=''){
@@ -137,9 +128,9 @@ const Clubinfo = ({ route }) => {
       setIsmy(true);
     }
     const fn = async () => {
-      const cData = await getClubDataById(club.cid);
-      setClubdata(cData);
-      setIsShipping(cData.shipping)
+      
+      setClubdata(clubb);
+      setIsShipping(clubb.shipping)
       
       // console.log(cData.shipping)
 
@@ -272,7 +263,6 @@ const Clubinfo = ({ route }) => {
         return el;
       }
     });
-    console.log(new Date())
   if (isMy) {
     return (
       <View style={{ flex: 1 }}>
@@ -293,12 +283,12 @@ const Clubinfo = ({ route }) => {
         <ScrollView style={{ flex: 1 }}>
           <View style={{ justifyContent: "flex-start", alignItems: "center", paddingHorizontal:20 }}>
           <View style={{width:'100%', height:50,justifyContent:'space-between', alignItems:'center', flexDirection:'row'}}>
-            <Text style={{marginHorizontal:10, width:100}}>Магазин {isWorking?'работает':'не работает'}</Text>
-            <Switch
+            <Text style={{color:!clubb.working?mainTheme.colorWarning:mainTheme.colorDarkText, marginHorizontal:10, width:100}}>Магазин {clubb.working?'работает':'не работает'}</Text>
+            {/* <Switch
                 activeText={'On'}
                 inActiveText={'Off'}
                 value={isWorking}
-                onValueChange={()=>{changeWorking()}}
+                onValueChange={()=>{changeWorking(isWorking, club.cid); setIsWorking(!isWorking);}}
                 // enableDrag
                 trackWidth={50}
                 trackHeight={20}
@@ -307,8 +297,14 @@ const Clubinfo = ({ route }) => {
                 circleActiveColor="white"
                 trackActiveColor="#42adff"
                 animationDuration={200}
-              />
-            
+              /> */}
+            <TouchableOpacity 
+                style={{backgroundColor:clubb.working?mainTheme.colorWarning:'#c9c9c9',...mainShadow, flex:1, padding:2, borderRadius:5}}
+                onPress={()=>{changeWorking(clubb.working, club.cid); }}
+              >
+                <Text style={{fontSize:11,textAlign:'center'}}>{clubb.working?'остановить ':'возобновить '}</Text>
+                <Text style={{fontSize:14,textAlign:'center'}}>работу</Text>
+              </TouchableOpacity>
           </View>
 
           <View style={{width:'100%', height:50,justifyContent:'space-between', alignItems:'center', flexDirection:'row'}}>
@@ -342,7 +338,7 @@ const Clubinfo = ({ route }) => {
                 animationDuration={200}
               />
           </View>
-             <Button  style={{backgroundColor:'#42adff'}} onPress={()=>{navigation.navigate('Statistic', {cid:clubData.cid})}}><Text style={{fontSize:14, marginRight:20}}>Cтатистика продаж точки </Text><SimpleLineIcons  name='graph' size={20} /></Button>   
+             <Button  style={{backgroundColor:'#42adff'}} onPress={()=>{navigation.navigate('Statistic', {cid:clubData.cid})}}><Text style={{fontSize:14, marginRight:20}}>Cтатистика продаж {clubData?.ruName} </Text><SimpleLineIcons  name='graph' size={20} /></Button>   
             <View>
               <Image
                 height={200}
@@ -373,7 +369,6 @@ const Clubinfo = ({ route }) => {
               <Ionicons name="add-circle-sharp" size={30} />
             </TouchableOpacity>
             {sorted.map((item, idx) => {
-              console.log(item)
               let date = new Date(item.date.seconds * 1000);
               return (
                 <View key={idx}>

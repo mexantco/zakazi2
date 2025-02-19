@@ -6,11 +6,12 @@ import {
   ImageBackground,
   Alert,
 } from "react-native";
+
 import { Card, Divider, HelperText, Snackbar } from "react-native-paper";
 import TextInput from "../components/ui/TextInput";
 import Button from "../components/ui/Button";
 import { mainShadow } from "../components/ui/ShadowStyles";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -21,6 +22,8 @@ import {
 import { useDispatch } from "react-redux";
 import { setUserData } from '../reducers/user'
 import { setUserDeviceToken } from "../utils/user";
+import { collection, getDoc, getDocs, getFirestore, onSnapshot, query, where } from "firebase/firestore";
+import { registerIndieID } from "native-notify";
 const validateEmail = (email) => {
   return email.match(
     /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -30,7 +33,10 @@ const initialValues = {
   email: { value: "", error: "" },
   password: { value: "", error: "" },
 };
+
+const firestore = getFirestore()
 const LoginScreen = ({ navigation }) => {
+  
   const [userInputs, setUserInputs] = useState(initialValues);
   const [buttonLoading, setButtonLoading] = useState(false);
   const auth = getAuth();
@@ -87,10 +93,27 @@ const LoginScreen = ({ navigation }) => {
       )
         .then(async(response) => {
 
-          let uData = response.user.uid;
-          await dispatch(setUserData({ userData: { uData } }));
+        let uData = response.user;
+        await registerIndieID(uData.uid, 27570, 'vQkmBW58lcX8VKdldh8fAU');
+
+         console.log('response')
+         console.log(uData.uid)
+          const q = query(
+            collection(firestore, "users"),
+            where("uid", "==", uData.uid)
+          );
+          const querySnapshot = await getDocs(q)
           
-          await setUserDeviceToken(uData)
+            querySnapshot.forEach(async (doc) => {
+                 dispatch(setUserData({ userData: doc.data() }));
+                        
+          });       
+                        
+          
+           
+          
+         
+          await setUserDeviceToken(uData.uid)
           signInWithCredential(auth, response);
         })
         .catch((error) => {

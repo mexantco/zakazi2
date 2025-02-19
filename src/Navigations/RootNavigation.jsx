@@ -15,7 +15,7 @@ const MyTheme = {
     background: "transparent",
   },
 };
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from "../reducers/user";
 import { View,Text, Image, ImageBackground } from "react-native";
 import { setSystem } from "../reducers/system";
@@ -23,55 +23,50 @@ import { setSystem } from "../reducers/system";
 
 const RootNavigation = () => {
   
-  const [user, setUser] = useState(null);
+  const user= useSelector(state=>state.user.userData);
   // const auth = getAuth();
   const firestore = getFirestore();
   const dispatch = useDispatch();
   useEffect(() => {
     const q1 = query(doc(firestore, "system", 'jWES5jreFn6HSmwaqYd5'));
     const unsubscribe = onSnapshot(q1, async(querySnapshot) => {
-          console.log('============')
-          console.log(querySnapshot.data())
+         
           dispatch(setSystem({...querySnapshot.data()}))
     })
-    onAuthStateChanged(auth, async (user) => {
-      console.log(user);
-      if (user) {
-        const q = query(collection(firestore, "users"), where('uid', '==', user.uid));
-        // const docRef = doc(firestore, "users", user.uid);
+  //   const auth = getAuth()
+  //   const userAuth = auth.currentUser;
+  //   if(!user.uid){
 
-        // const userData = await getDoc(docRef);
-        // console.log('///////');
-        // console.log(userData.data());
-        const unsubscribe = onSnapshot(q, async(querySnapshot) => {
-         
-          // querySnapshot.forEach((doc) => {
-          //   messages.push(doc.data());
-          // });
+  //     if (userAuth) {
+        
+  //         const q = query(collection(firestore, "users"), where('uid', '==', userAuth.uid));
+        
+  //         const unsubscribe = onSnapshot(q, async(querySnapshot) => {
           
-          querySnapshot.forEach((doc) => {
-            console.log('//--//--//--//');
-            console.log(doc.data());
-             dispatch(
-             setUserData({
-            userData: { ...doc.data(), uid: user.uid },
-             })
-        );
-          });
-         
-        setUser(user);
-        });
+  //           querySnapshot.forEach((doc) => {
+  //             console.log('//--//--//--//');
+  //             console.log(doc.data());
+  //             dispatch(
+  //             setUserData({
+  //             userData: { ...doc.data(), uid: userAuth.uid },
+  //             })
+  //         );
+  //           });
+          
+  //         });
 
-      } else {
-        dispatch(
-          setUserData({
-            userData: {},
-          })
-        );
-        setUser({});
-      }
-    });
+  //       } else {
+  //         dispatch(
+  //           setUserData({
+  //             userData: {},
+  //           })
+  //         );
+        
+  //       }
+  //   }
+    
   }, []);
+
   return (
     <SafeAreaProvider>
       

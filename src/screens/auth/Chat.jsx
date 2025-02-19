@@ -2,10 +2,10 @@ import { StyleSheet, FlatList, Text, View, TouchableOpacity, ImageBackground } f
 import React, { useEffect, useState } from "react";
 import Colors from "../../constants/Colors";
 import TextInput from "../../components/ui/TextInput";
-import { IconButton, Avatar } from "react-native-paper";
+import { IconButton, Avatar, ActivityIndicator } from "react-native-paper";
 import { useLayoutEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { setDoc, updateDoc } from "firebase/firestore";
+import { addDoc, doc, setDoc, updateDoc } from "firebase/firestore";
 import { getChatBetweenTwo, markAllReaded } from "../../utils/chat";
 import { getUserDataById} from "../../utils/user";
 import { useFonts } from "expo-font";
@@ -50,116 +50,110 @@ const Message = ({ message, order }) => {
   );
 };
 const Chat = ({ navigation, uid, unr, order, modal, active, mode }) => {
-  let [fontsLoaded] = useFonts({
-    'Gilroy-Light': require('../../fonts/Gilroy-Light.otf'),
-    'Gilroy-ExtraBold': require('../../fonts/Gilroy-ExtraBold.otf'),
-   });
-
-const dispatch = useDispatch();
-  const firestore = getFirestore();
-  const [usData, setUsData] = useState();
-   
-  // const uid = route.params.userData.uid;
-  // const unr = route.params.unr;
-  
-  // requestAnimationFrame(async()=>{
-
-
-  // })
-  useLayoutEffect(() => {
-
-    const getData = async()=>{
-      setLoaded(false)
-      const doc = await getChatBetweenTwo(uid, order?order:userData.uid);
-      await markAllReaded(doc.id, uid);
-      const userD = await getUserDataById(uid);
-
-      let photo = userD.photos[0];
-
-
-      if(order){
-        const q = query(
-          collection(firestore, "chats"),
-          where("users", "array-contains", order)
-        );
-        const unsubscribe = await onSnapshot(q,  (querySnapshot) => {
-          const messages = [];
-          querySnapshot.forEach((doc) => {
-            messages.push(doc.data());
-          });
-          
-
-           dispatch(
-            setChats({
-              chats: messages,
-            })
-            
-          );
-          setLoaded(true);
-
-        });
-
-        // onAuthStateChanged(auth, async (user) => {
-        //   if (!user) {
-        //     unsubscribe();
-        //   }
-        // });
-      }
-      
-    }
-    
-    getData()
-
-  }, []);
-
   const allMessages = useSelector((state) => state.chats.chats);
-
+  // console.log(allMessages)
   const userData = useSelector((state) => state.user.userData);
   //  console.log(userData);
   const [loaded, setLoaded] = useState(false)
   const [messages, setMessages] = useState([]);
+  // console.log('messages')
+  // console.log(messages)
   const [messageText, setMessageText] = useState("");
-  
-  useEffect(() => {
-   
-    const messageInChat = [];
+  const[docref, setDoc] = useState(null)
+  let [fontsLoaded] = useFonts({
+    'Gilroy-Light': require('../../fonts/Gilroy-Light.otf'),
+    'Gilroy-ExtraBold': require('../../fonts/Gilroy-ExtraBold.otf'),
+   });
+   useEffect(()=>{
+    let messageInChat = [];
     allMessages.forEach((value, index) => {
       
-      if (value.users.includes(uid)) {
+    if (value.users.includes(order||uid)) {
 
-        messageInChat.push(value.messages);
+      messageInChat.push(value.messages);
 
-        setMessages(messageInChat[0]);
-      }
+      setMessages(messageInChat[0]);
+    }})},[allMessages])
 
+const dispatch = useDispatch();
+  const firestore = getFirestore();
+  const [usData, setUsData] = useState();
 
-
-    });
-    const asfn = async()=>{
-    const doc = await getChatBetweenTwo(uid, order?order:userData.uid);
-    setLoaded(true)
-    await markAllReaded(doc.id, uid);
-
-    }
+  useEffect(() => {
+    
+    const getData = async()=>{
+      setLoaded(false)
+      const q = query(
+        collection(firestore, "chats"),
+        where("users", "array-contains", order||uid)
+      );
+      
    
-    asfn();
-  }, [allMessages]);  
+      const doc = await getChatBetweenTwo(uid, order?order:userData.uid);
+      // console.log('doc')
+      // console.log(doc)
+      setDoc(doc)
+      const unsubscribe =  onSnapshot(q,  async (querySnapshot) => {
+        
+        const messages = [];
+        querySnapshot.forEach((document) => {
+          console.log('1')
+          console.trace()
+          setDoc(document)
+          console.log('document.data()')
+          console.log(document.data())
+          messages.push(document.data());
+        });
+        
+         dispatch(
+          setChats({
+            chats: messages,
+          })
+          
+        );
+        if(messages[0].messages.some(el=>el.unread==true)){
+          // await markAllReaded(doc.id, uid);
+        }
+      });
+        
+      if(doc==null){ setLoaded(true); return}
+      await markAllReaded(doc.id, uid);
+      setLoaded(true);
+      
+      
+    }
+    
+    getData()
+    
+  }, []);
 
-  const sendMessage = () => {
+
+  const sendMessage = async () => {
+    
     requestAnimationFrame(async () => {
       if (messageText === "") {
         return;
       }
+      if(!docref){
+            await addDoc(collection(firestore, "chats"), {
+              messages: [{ text: messageText, sender_id: order?order:userData.uid, unread:true }],
+              users: [uid, order?order:userData.uid],
+              order: order||uid
+            });
+            
+            return
+          }
 
-      const doc = await getChatBetweenTwo(uid, order?order:userData.uid);
+      //const doc = await getChatBetweenTwo(uid, order?order:userData.uid);
 
-      await updateDoc(doc.ref, {
+     await updateDoc(doc(firestore, 'chats', docref.id), {
         messages: [
-          ...doc.data().messages,
+          ...messages,
           { text: messageText, sender_id: order?order:userData.uid, unread:true },
         ],
 
       });
+     
     });
     setMessageText("");
   };
@@ -179,15 +173,23 @@ const dispatch = useDispatch();
         }}
       ></View>
       <View style={styles.chatbox}>
-        {loaded?(<><FlatList
+        {loaded?(<>
+        <FlatList
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
+          ListEmptyComponent={()=>
+            <View style={{flexGrow:1, paddingBottom:50, transform: [{scaleX: -1}, {scaleY: -1}], justifyContent:'center', alignItems:'center'}}>
+              <Text style={{color:'#bbb'}}>Чат заказа пуст</Text>
+            </View>}
           data={messages}
           inverted
-          contentContainerStyle={{ flexDirection: "column-reverse" }}
+          contentContainerStyle={{ flexDirection: "column-reverse"}}
           keyExtractor={(item, index) => index}
           renderItem={({ item }) => <Message order={order} message={item} />}
-        /></>):(<><Text style={{alignSelf:'center', flex:1, verticalAlign:'middle'}}>Подождите</Text></>)}
+        /></>):(<>
+        <ActivityIndicator style={{flex:1, alignSelf:'center', verticalAlign:'middle'}}/>
+        {/* <Text style={{alignSelf:'center', flex:1, verticalAlign:'middle'}}>Подождите</Text> */}
+        </>)}
 
       </View>
       {mode!='view'&&
@@ -195,7 +197,7 @@ const dispatch = useDispatch();
         <View style={{ flex: 1 }}>
           <TextInput
             mode="flat"
-            label="Напишите что то"
+            label={"Напишите что то "+(order?'покупателю':'продавцу')} 
             value={messageText}
             onChangeText={setMessageText}
           />

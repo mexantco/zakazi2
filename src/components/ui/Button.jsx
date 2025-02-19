@@ -1,15 +1,17 @@
 import { StyleSheet } from "react-native";
 import React from "react";
 import { Button as PaperButton } from "react-native-paper";
+import Animated from "react-native-reanimated";
 const Button = (props) => {
+  const AnimButton = Animated.createAnimatedComponent(PaperButton)
   return (
-    <PaperButton
+    <AnimButton
       {...props}
       style={[styles.button, props.style]}
       labelStyle={[styles.label, props.labelStyle]}
     >
       {props.children}
-    </PaperButton>
+    </AnimButton>
   );
 };
 
