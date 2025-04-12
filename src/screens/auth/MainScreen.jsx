@@ -26,7 +26,7 @@ import MyClubs from "./MyClubs";
 import Delivery from "./Delivery";
 const Tab = createBottomTabNavigator();
 const MainScreen = ({ navigation, route }) => {
-
+ 
   const [fontsLoaded] = useFonts({
     // 'AA-Neon': require('../../fonts/AA-Neon.ttf'),
     'canis-minor': require('../../fonts/canisminor.ttf'),
@@ -96,7 +96,7 @@ const MainScreen = ({ navigation, route }) => {
   
   },[])
   useEffect(()=>{console.log('loaded')},[fontsLoaded])
-
+  const maxbuttons = user.role&&(user.role=='delivery'||user.role=='bar')&&(user.myClubs&&user.myClubs.length>0)
   return (
 
     <Tab.Navigator
@@ -119,7 +119,8 @@ const MainScreen = ({ navigation, route }) => {
       name="Orders"
        component={Orders}
         options={{
-          tabBarButton:(props)=><ButtonMainScreen size={72} props={props} title={'Мои заказы'} icon='playlist-add-check-circle' font={"MaterialIcons"}/>,
+          tabBarButton:(props)=><ButtonMainScreen buttonsCount={maxbuttons} 
+          size={72} props={props} animBottom={animBottom} title={'Мои заказы'} icon='playlist-add-check-circle' font={"MaterialIcons"}/>,
 
             headerShown:false,
             title:'Заказы'
@@ -135,7 +136,8 @@ const MainScreen = ({ navigation, route }) => {
         
         
         options={{
-          tabBarButton:(props)=><ButtonMainScreen size={40} props={props} title={'Внимание'} icon='warning' warning font='FontAwesome'/>,
+          tabBarButton:(props)=><ButtonMainScreen buttonsCount={maxbuttons} 
+          size={40} props={props} title={'Внимание'} icon='warning' warning font='FontAwesome'/>,
           
           headerShown:false,
           title: "Места" }}
@@ -148,7 +150,8 @@ const MainScreen = ({ navigation, route }) => {
             hide:hideAnimation}}
           component={Maps}
           options={{
-            tabBarButton:(props)=><ButtonMainScreen props={props} size={70} title={'Места'} icon='globe' font='FontAwesome'/>,
+            tabBarButton:(props)=><ButtonMainScreen buttonsCount={maxbuttons} 
+            props={props} animBottom={animBottom} size={70} title={'Места'} icon='globe' font='FontAwesome'/>,
             headerShown:false,
             title: "Места" }}
         />
@@ -158,7 +161,8 @@ const MainScreen = ({ navigation, route }) => {
           component={Profile}
           
           options={{
-            tabBarButton:(props)=><ButtonMainScreen props={props} size={60} title={'Профиль'} icon='user-circle' font='FontAwesome'/>,
+            tabBarButton:(props)=><ButtonMainScreen buttonsCount={maxbuttons} 
+            props={props} animBottom={animBottom} size={60} title={'Профиль'} icon='user-circle' font='FontAwesome'/>,
             
             headerShown:false,
             title: "Профиль" }}
@@ -169,7 +173,8 @@ const MainScreen = ({ navigation, route }) => {
         initialParams={{user:user}}
         component={Ordersbar}
         options={{
-          tabBarButton:(props)=><ButtonMainScreen props={props} size={40} title={'Работа'} icon='receipt-outline' font="IonIcons"/>,
+          tabBarButton:(props)=><ButtonMainScreen buttonsCount={maxbuttons} 
+          props={props} animBottom={animBottom} size={40} title={'Работа'} icon='receipt-outline' font="IonIcons"/>,
           headerShown:false,
           title: "Работа" }}
       />
@@ -180,7 +185,8 @@ const MainScreen = ({ navigation, route }) => {
         initialParams={{user:user}}
         component={Delivery}
         options={{
-          tabBarButton:(props)=><ButtonMainScreen props={props} size={50} title={'Доставка'} icon='delivery-dining' font="MaterialIcons"/>,
+          tabBarButton:(props)=><ButtonMainScreen buttonsCount={maxbuttons} 
+          props={props} animBottom={animBottom} size={50} title={'Доставка'} icon='delivery-dining' font="MaterialIcons"/>,
           headerShown:false,
           title: "Работа" }}
       />
@@ -206,7 +212,8 @@ const MainScreen = ({ navigation, route }) => {
         component={MyClubs}
         
         options={{
-          tabBarButton:(props)=><ButtonMainScreen props={props} size={50} title={'Мой бизнес'} icon='shop' font="Entypo"/>,
+          tabBarButton:(props)=><ButtonMainScreen buttonsCount={maxbuttons} 
+          props={props} animBottom={animBottom} size={50} title={'Мой бизнес'} icon='shop' font="Entypo"/>,
           
           headerShown:false,
           title: "Работа" }}

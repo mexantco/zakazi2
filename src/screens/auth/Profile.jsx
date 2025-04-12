@@ -71,7 +71,7 @@ export const MaterialCommunityIcon = ({name, press, text}) =>{
   return(
     <View>
     <TouchableOpacity style={styles.chatBtn} onPress={press}>
-           <Entypo name={name}  style={styles.iconContent} size={50} color={'#a9d9a9'}/>
+           <MaterialCommunityIcons name={name}  style={styles.iconContent} size={50} color={'#a9d9a9'}/>
            
     </TouchableOpacity>
     <Text style={styles.btnText}>{text}</Text>
@@ -254,10 +254,14 @@ const Profile = ({route, navigation}) => {
           :null
           } */}
           {/* </View> */}
-          <View>
-          {icon({text:'настройки',name:'options', press:()=>{navigation.navigate('Settings')}})}
-          {icon({text:'выйти',name:'log-out', press:handleSingout})}
-          </View>
+            <View>
+            {icon({text:'настройки',name:'options', press:()=>{navigation.navigate('Settings')}})}
+            {icon({text:'выйти',name:'log-out', press:handleSingout})}
+            </View>
+            <View>
+            {MaterialCommunityIcon({text:'чат с поддержкой',name:'chat-question', press:()=>{navigation.navigate('Chat', {uid:'support'})}})}
+            {/* {icon({text:'выйти',name:'log-out', press:handleSingout})} */}
+            </View>
           </View>
           </View>
         </View>

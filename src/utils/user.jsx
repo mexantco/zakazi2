@@ -49,9 +49,9 @@ const  handleRegistrationError = (errorMessage)=> {
   throw new Error(errorMessage);
 }
 export const setUserDeviceToken = async (userId)=>{
- 
   const docRef = doc(firestore, "users", userId);
-  
+  const staffQuery = query(collection(firestore, 'staff'), where('uid', '==', userId))
+  const staffSnapshot = await getDocs(staffQuery);
     if (Platform.OS === 'android') {
       Notifications.setNotificationChannelAsync('default', {
         name: 'default',
@@ -60,7 +60,6 @@ export const setUserDeviceToken = async (userId)=>{
         lightColor: '#FF231F7C',
       });
     }
-  
     if (Device.isDevice) {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
@@ -86,6 +85,14 @@ export const setUserDeviceToken = async (userId)=>{
         await updateDoc(docRef,{
           pushToken:pushTokenString
         })
+        if(!staffSnapshot.empty){
+          staffSnapshot.forEach(async (document)=>{
+            const ref = doc(firestore, 'staff', document.id);
+            await updateDoc(ref, {
+              token:pushTokenString
+            });
+          })
+        }
         return pushTokenString;
       } catch (e) {
         handleRegistrationError(`${e}`);

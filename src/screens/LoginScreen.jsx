@@ -24,6 +24,15 @@ import { setUserData } from '../reducers/user'
 import { setUserDeviceToken } from "../utils/user";
 import { collection, getDoc, getDocs, getFirestore, onSnapshot, query, where } from "firebase/firestore";
 import { registerIndieID } from "native-notify";
+import {
+  GoogleOneTapSignIn,
+  statusCodes,
+  isErrorWithCode,
+  isSuccessResponse,
+  isNoSavedCredentialFoundResponse,
+} from '@react-native-google-signin/google-signin';
+import { GoogleSigninButton } from "@react-native-google-signin/google-signin";
+
 const validateEmail = (email) => {
   return email.match(
     /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -36,7 +45,12 @@ const initialValues = {
 
 const firestore = getFirestore()
 const LoginScreen = ({ navigation }) => {
-  
+  useEffect(() => {
+    
+    GoogleSignIn.configurse({
+      webClientId: 'autoDetect',
+    });
+  }, []);
   const [userInputs, setUserInputs] = useState(initialValues);
   const [buttonLoading, setButtonLoading] = useState(false);
   const auth = getAuth();
@@ -220,6 +234,7 @@ const LoginScreen = ({ navigation }) => {
             >
               Login
             </Button>
+            <GoogleSigninButton />
             <Pressable
               onPress={showSignup}
               style={({ pressed }) => pressed && { opacity: 0.5 }}
@@ -231,6 +246,7 @@ const LoginScreen = ({ navigation }) => {
                 Don't have an account? sign up now!
               </Text>
             </Pressable>
+
           </Card.Content>
         </Card>
       </SafeAreaView>

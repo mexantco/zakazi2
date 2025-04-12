@@ -5,7 +5,7 @@ import TextInput from "../../components/ui/TextInput";
 import { IconButton, Avatar, ActivityIndicator } from "react-native-paper";
 import { useLayoutEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { addDoc, doc, setDoc, updateDoc } from "firebase/firestore";
+import { addDoc, and, doc, getDocs, or, setDoc, updateDoc } from "firebase/firestore";
 import { getChatBetweenTwo, markAllReaded } from "../../utils/chat";
 import { getUserDataById} from "../../utils/user";
 import { useFonts } from "expo-font";
@@ -49,7 +49,8 @@ const Message = ({ message, order }) => {
     </View>
   );
 };
-const Chat = ({ navigation, uid, unr, order, modal, active, mode }) => {
+const Chat = ({ navigation, uid, unr, order, modal, active, mode, route }) => {
+  const user_id = uid||route.params.uid
   const allMessages = useSelector((state) => state.chats.chats);
   // console.log(allMessages)
   const userData = useSelector((state) => state.user.userData);
@@ -68,13 +69,15 @@ const Chat = ({ navigation, uid, unr, order, modal, active, mode }) => {
     let messageInChat = [];
     allMessages.forEach((value, index) => {
       
-    if (value.users.includes(order||uid)) {
+    if (value.users.includes(order||user_id)) {
 
       messageInChat.push(value.messages);
 
       setMessages(messageInChat[0]);
     }})},[allMessages])
 
+console.log(allMessages)
+console.log(userData.uid)
 const dispatch = useDispatch();
   const firestore = getFirestore();
   const [usData, setUsData] = useState();
@@ -82,26 +85,31 @@ const dispatch = useDispatch();
   useEffect(() => {
     
     const getData = async()=>{
+      
       setLoaded(false)
       const q = query(
         collection(firestore, "chats"),
-        where("users", "array-contains", order||uid)
+        or
+        (where("users", "==", [user_id,order||userData.uid]),where("users", "==", [order||userData.uid,user_id]))
+        
       );
-      
-   
-      const doc = await getChatBetweenTwo(uid, order?order:userData.uid);
+      try{
+        const docs = await getDocs(q)
+        console.log('docs')
+        console.log(docs)
+      }catch(e){
+        console.log(e)
+      }
+      const doc = await getChatBetweenTwo(user_id, order?order:userData.uid);
       // console.log('doc')
       // console.log(doc)
       setDoc(doc)
       const unsubscribe =  onSnapshot(q,  async (querySnapshot) => {
-        
+        console.log('querySnapshot.size')
+        console.log(querySnapshot.size)
         const messages = [];
         querySnapshot.forEach((document) => {
-          console.log('1')
-          console.trace()
           setDoc(document)
-          console.log('document.data()')
-          console.log(document.data())
           messages.push(document.data());
         });
         
@@ -117,7 +125,7 @@ const dispatch = useDispatch();
       });
         
       if(doc==null){ setLoaded(true); return}
-      await markAllReaded(doc.id, uid);
+      await markAllReaded(doc.id, user_id);
       setLoaded(true);
       
       
@@ -134,17 +142,23 @@ const dispatch = useDispatch();
       if (messageText === "") {
         return;
       }
+
+      console.log('===================')
+      console.log(user_id)
+      console.log(order)
+      console.log(userData.uid)
+      console.log(docref)
+      // return
       if(!docref){
             await addDoc(collection(firestore, "chats"), {
               messages: [{ text: messageText, sender_id: order?order:userData.uid, unread:true }],
-              users: [uid, order?order:userData.uid],
-              order: order||uid
+              users: [user_id, order?order:userData.uid],
+              order: order||user_id
             });
             
             return
           }
 
-      //const doc = await getChatBetweenTwo(uid, order?order:userData.uid);
 
      await updateDoc(doc(firestore, 'chats', docref.id), {
         messages: [
@@ -179,7 +193,7 @@ const dispatch = useDispatch();
           showsHorizontalScrollIndicator={false}
           ListEmptyComponent={()=>
             <View style={{flexGrow:1, paddingBottom:50, transform: [{scaleX: -1}, {scaleY: -1}], justifyContent:'center', alignItems:'center'}}>
-              <Text style={{color:'#bbb'}}>Чат заказа пуст</Text>
+              <Text style={{color:'#bbb'}}>Чат {user_id=='support'?'с поддержкой':'заказа' } пуст</Text>
             </View>}
           data={messages}
           inverted
@@ -197,7 +211,7 @@ const dispatch = useDispatch();
         <View style={{ flex: 1 }}>
           <TextInput
             mode="flat"
-            label={"Напишите что то "+(order?'покупателю':'продавцу')} 
+            label={user_id=='support'?'Задайте вопрос поддержке.':"Напишите что то "+(order?'покупателю':'продавцу')} 
             value={messageText}
             onChangeText={setMessageText}
           />

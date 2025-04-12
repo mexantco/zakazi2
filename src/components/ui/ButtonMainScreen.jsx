@@ -2,6 +2,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { mainShadow } from "./ShadowStyles"
 import { mainTheme } from "../../config/theme"
 import { Ionicons, AntDesign, Entypo, MaterialCommunityIcons, Foundation, FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import Animated from "react-native-reanimated";
 
 const styles = StyleSheet.create({
     tabIcon:{
@@ -41,24 +42,25 @@ const styles = StyleSheet.create({
           backgroundColor:mainTheme.colorGreen
         }
 })
-const ButtonMainScreen = ({props, title, icon, warning, font, size})=>{
+const ButtonMainScreen = ({buttonsCount, props, title, icon, warning, font, size, animBottom})=>{
+  const minus = buttonsCount?10:0
     const Icon = {
-        'MaterialIcons':<MaterialIcons name={icon} size={size} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon,{marginLeft:-15} ]} />,
-        'FontAwesome':<FontAwesome name={icon} size={size} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon ]}/>,
-        'MaterialCommunityIcons': <MaterialCommunityIcons name={icon} size={size} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon ]}/>,
-        'IonIcons':<Ionicons name={icon} size={size} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon ]}/>,
-        'Entypo':<Entypo name={icon} size={size} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon ]}/>
+        'MaterialIcons':<MaterialIcons name={icon} size={size-minus} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon,{marginLeft:-15} ]} />,
+        'FontAwesome':<FontAwesome name={icon} size={size-minus} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon ]}/>,
+        'MaterialCommunityIcons': <MaterialCommunityIcons name={icon} size={size-minus} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon ]}/>,
+        'IonIcons':<Ionicons name={icon} size={size-minus} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon ]}/>,
+        'Entypo':<Entypo name={icon} size={size-minus} color={props.accessibilityState.selected?"#fff":"#ffffff90"} style={[styles.tabIcon ]}/>
     }
     return(
-<View style={styles.tabBtnContainer}>
+<Animated.View style={[styles.tabBtnContainer, animBottom]}>
  <TouchableOpacity
      onPress={props.onPress}
      activeOpacity={1}
-     style={[styles.tabBtn, props.accessibilityState.selected?[styles.selectedIcon, warning&&{backgroundColor:'#dd7777'}]:null]}
+     style={[styles.tabBtn, buttonsCount==true&&{width:50, height:50}, props.accessibilityState.selected?[styles.selectedIcon,  warning&&{backgroundColor:'#dd7777'}]:null]}
     >
          {Icon[font]}   
     </TouchableOpacity>
     <Text style={[styles.textBtn, props.accessibilityState.selected?[styles.selectedText, warning&&{color:'#dd7777'}]:null]}>{title}</Text>
-</View>
+</Animated.View>
 )}
 export default ButtonMainScreen

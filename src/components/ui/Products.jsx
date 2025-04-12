@@ -435,7 +435,8 @@ const Products = ({route})=>{
                 horizontal
                 data={additions}
                 keyExtractor={(item, index) => index}
-                renderItem={({item, index})=>{console.log(item);return(<>
+                renderItem={({item, index})=>{
+                  return(
                 <View key={index} style={{flexDirection:'column', justifyContent:'center', alignItem:'center', marginHorizontal:20}}>
                   <Text style={{textAlign:'center'}}>{item.name}</Text>
                   <BouncyCheckbox  
@@ -453,7 +454,7 @@ const Products = ({route})=>{
                   }))
                     }} 
                   />
-                  </View></>)}}
+                  </View>)}}
                 />
             </>)
             :(<>

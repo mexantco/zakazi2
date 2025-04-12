@@ -77,11 +77,15 @@ const AuthenticationNavigation = () => {
         collection(firestore, "chats"),
         where("users", "array-contains", userData.uid)
       );
+      console.log('id=================================')
+      console.log(userData.uid)
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const messages = [];
         querySnapshot.forEach((doc) => {
           messages.push(doc.data());
         });
+        console.log('messages.................')
+        console.log(messages)
         dispatch(
           setChats({
             chats: messages,
@@ -202,6 +206,12 @@ const AuthenticationNavigation = () => {
       options={{
         animationEnabled:false,
         header:()=>(<HeaderCustom name='Персонал клуба'/>)
+      }}
+      />
+      <Stack.Screen name="Chat" component={Chat}
+      options={{
+        animationEnabled:false,
+        header:()=>(<HeaderCustom name='Чат'/>)
       }}
       />
       <Stack.Screen name="Settings" component={Settings}

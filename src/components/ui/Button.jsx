@@ -7,7 +7,7 @@ const Button = (props) => {
   return (
     <AnimButton
       {...props}
-      style={[styles.button, props.style]}
+      style={[styles.button, styles[props.type], props.style]}
       labelStyle={[styles.label, props.labelStyle]}
     >
       {props.children}
@@ -18,6 +18,9 @@ const Button = (props) => {
 export default Button;
 
 const styles = StyleSheet.create({
+  secondary:{
+    backgroundColor:'#b0b0b0'
+  },
   button: {
     shadowColor: "#a17eff",
     shadowOffset: {

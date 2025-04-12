@@ -54,6 +54,8 @@ import { useFonts } from 'expo-font';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Loader from "../../components/ui/Loader";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import HeaderCustom from "../../components/ui/Header";
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
 
 const Napitok = ({ nap, idx, orderLength }) => {
@@ -127,7 +129,7 @@ const Napitok = ({ nap, idx, orderLength }) => {
           </Text>
           </View>
           <View style={{flexDirection:'column', flex:1, justifyContent:'space-between'}}>
-            {nap.orderAdditions.map(el=><Text>+ {el.name} {el.cost} р.</Text>)}
+            {nap.orderAdditions.map((el, idx)=><Text key={idx}>+ {el.name} {el.cost} р.</Text>)}
           </View>
           <TouchableOpacity
             style={{ flex: 1 }}
@@ -180,7 +182,13 @@ const Order = ({ navigation, route }) => {
   const [shippingCostMoment, setShippingCost] = useState(null)
   const clubData = useSelector(state=>state.clubs.clubData)
   const system = useSelector(state=>state.system.system)
+  const [contentHeight, setContentHeight] = useState(0)
   const cityElement = system.cities.find(el=>el.id==clubData.city)
+  const heightAnimate = useSharedValue(0)
+  const [rbModal, setRBModal] = useState(false)
+  const animatedHeightStyle = useAnimatedStyle(()=>({
+    height:heightAnimate.value
+  }))
   const preQuery = cityElement.region?cityElement.region+' '+cityElement.ruName:cityElement.ruName
   console.log(cityElement)
   console.log(preQuery)
@@ -193,10 +201,16 @@ const Order = ({ navigation, route }) => {
     setSuggest(response.data.suggestions)
   }
   ////////создание заказа
-  const addOrder = async () => {
+  const addOrder = async (noAddress) => {
     let arrToPush = []
-    refRBSheet.current.close()
-    setLoading(true);
+    // refRBSheet.current.close()
+    setRBModal(false)
+    console.log('noAddress')
+    console.log(noAddress)
+    if(!noAddress){
+      setModal(true);
+    }
+    
     const q = query(collection(db, "staff"), where('club', '==', cid)); 
     const docs = await getDocs(q)
     docs.forEach(async (doc)=>{
@@ -208,7 +222,7 @@ const Order = ({ navigation, route }) => {
       return false
     }
     try {
-      
+      console.log('1')
       
       const cityId = clubData.city
       
@@ -222,20 +236,25 @@ const Order = ({ navigation, route }) => {
         clubRuName:clubData.ruName,
         city:cityId,
         arrayToPush:arrToPush,
-        address: address,
+        address: noAddress?'':address,
         addressUri: addressUri
       });
-      
+      console.log('2')
       const order_id = res.data.order_id
+      console.log(order_id)
+
       await AsyncStorage.setItem('order_id', order_id)
-      if(address!=''){
+      console.log('3-')
+      if(address!=''&&!noAddress){
+        console.log('3')
+       
         const q = query(collection(db, 'orders'), where('order_id', '==', order_id))
         const unsibscribe =onSnapshot(q, async(querySnapshot)=>{
           querySnapshot.forEach(document=>{
             
             if(document.data().status==0){
               ////////
-              setModalText('Доставка подтверждена. Переходим к оплате.')
+              setModalText('Переходим к оплате.')
               setTimeout(()=>{
                 dispatch(setOrder({ order: [] }));
                 Linking.openURL('https://clubnight.ru/payment_page?label='+order_id)
@@ -248,6 +267,7 @@ const Order = ({ navigation, route }) => {
           })
         })
       }else{
+        console.log('4')
         dispatch(setOrder({ order: [] }));
         Linking.openURL('https://clubnight.ru/payment_page?label='+order_id)
         setModal(false)
@@ -274,6 +294,7 @@ const Order = ({ navigation, route }) => {
     }
     
   };
+
   const handleCancelDeliver = async ()=>{
 
     let order_id = await AsyncStorage.getItem('order_id')
@@ -289,24 +310,29 @@ const Order = ({ navigation, route }) => {
     setModal(false)
 
   }
+  const handleLayout = (value) => {
+    // const { height } = event.nativeEvent.layout;
+    heightAnimate.value =  withTiming(value,{
+      duration:300,
+      easing: Easing.inOut(Easing.ease),
+    })
+  };
   const calculateShipping = async ()=>{
     const res = await axios.get(`https://clubnight.ru/calculate_shipping?sign=${signAddress}&lat=${clubData.lat}&lon=${clubData.lon}`)
     console.log('sum')
     console.log(res.data)
-    return
-    setShippingCost(sum)
-    refRBSheet.current.close()
+    setShippingCost(res.data.sum)
+    setTypeAddr(false)
   }
   useEffect(() => {
-    // (async ()=>{
-    //   const res = await getClubDataById(cid)
-    //   setC
-    // })()
+
     return () => {
       console.log("back");
       dispatch(setOrder({ order: [] }));
     };
   }, []);
+  console.log('loading')
+  console.log(loading)
   return (
     <View
       style={{
@@ -332,45 +358,38 @@ const Order = ({ navigation, route }) => {
         btnText='Не надо. Заберу сам' 
         visible={modal}/>
       </Modal>
-      <RBSheet
-      height={Dimensions.get('window').height}
-      onClose={()=>{setTypeAddr(false), setAddress('')}}
-      closeOnPressBack
-      // dragOnContent={true}
-      //  draggable={true}
-       openDuration={500}
+      <Modal
+        transparent
+        animationType='none'
+        visible={rbModal}
+        closeOnPressBack
         ref={refRBSheet}
-        // useNativeDriver={true}
-        customStyles={{
-          wrapper: {
-            paddingTop:useSafeAreaInsets().top,
-            backgroundColor: 'transparent',
-          },
-          container:{
-            borderRadius:20
-          },
-          draggableIcon: {
-            backgroundColor: '#000',
-          },
-        }}
-        customModalProps={{
-          animationType: 'slide',
-          statusBarTranslucent: true,
-        }}
-        customAvoidingViewProps={{
-          enabled: true,
-        }}>{typeAddr?(<>
-        <View style={{flex:1, padding:20}}>
+       
+        >
+          <TouchableOpacity 
+          onPress={()=>{setRBModal(false);setTypeAddr(false); setShippingCost(null)}}
+          style={{flex:1, justifyContent:'flex-end', flexDirection:'column', backgroundColor:'#00000050'}}
+          >
+            <Animated.View style={[{backgroundColor:'#fff', borderTopLeftRadius:20, borderTopRightRadius:20, width:'100%'},animatedHeightStyle, typeAddr&&{position:'absolute', top:0, left:0} ]}>
+          {
+          shippingCostMoment?
+          <View  style={{padding:20, paddingBottom:40}}>
+              
+              <Text style={{textAlign:'center', margin:12, fontSize:18, fontFamily:'Inter_500Medium'}}>{`Cтоимость доставки ${shippingCostMoment}р.`}</Text>
+              <Button onPress={()=>{addOrder()}} style={{marginVertical:20}}>Начать поиск доставщика</Button>
+              <Button onPress={()=>{ addOrder(true)}} style={{marginVertical:20}} type='secondary' labelStyle={{fontSize:16}} >Доставка не нужна. Заберу сам</Button>
+          </View>
+          :typeAddr?
+        <View style={{flex:1, padding:20, paddingBottom:40, position:'absolute', top:0,left:0, height:'100%', width:'100%'}}>
           <TextInput placeholder="укажите место доставки" style={{paddingHorizontal:20, borderColor:'#d0d0d0', height:50, borderWidth:1,backgroundColor:'#f0f0f0', borderRadius:20}} 
           onChangeText={(text)=>{queryData(text);}} 
           value={textValue}
           />
-          <ScrollView >
+          <ScrollView>
             {suggest&&suggest.map(((item, index)=>{if(false){return false}else{return(
             <TouchableOpacity  
             key={index}
             onPress={()=>{
-              // console.log(item.subtitle&&item.subtitle.text+' '+item.title.text)
               setAddress(item.value);
               setSignAddress(item.sign);
               setTextValue(item.value)
@@ -385,21 +404,20 @@ const Order = ({ navigation, route }) => {
           ))}
           </ScrollView>
           <Button
-          onPress={async()=>{await calculateShipping()}}
+          onPress={async()=>{await calculateShipping(); handleLayout(300)}}
           disabled={address==''?true:false}
           style={[{ selfAlign:'center', marginHorizontal:30, marginVertical:0}, address==''?{backgroundColor:'#bbb'}:null]}
           labelStyle={{fontSize:14, padding:5, margin:0}}
           >
-            Сохранить адресс
+            Сохранить адрес
           </Button>
         </View>
-        </>)
-        :(<>
-          <View style={{flex:1, padding:20, flexDirection:'column', justifyContent:'space-between'}}>
+        :
+        <View  style={{flex:1, padding:20, flexDirection:'column', justifyContent:'space-between', paddingBottom:40}}>
         <Text style={{textAlign:'center'}}>Нужна доставка?</Text>
-        <Text
+        {/* <Text
           style={{ marginTop: 10, marginBottom: 10, textAlign:'center' }}
-        >{`стоимость доставки ${shippingCost}р.`}</Text>
+        >{`стоимость доставки ${shippingCost}р.`}</Text> */}
         <View
           style={{
             flexDirection: "row",
@@ -408,28 +426,24 @@ const Order = ({ navigation, route }) => {
             flexGrow:1
           }}
         >
-          <TouchableOpacity style={styles.modalBtn} onPress={()=>{setTypeAddr(true)}}>
+          <Button onPress={()=>{setTypeAddr(true); handleLayout(Dimensions.get('window').height)}}>
             <Text>Да</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-          onPress={()=>{addOrder()}}
-          style={styles.modalBtn}>
+          </Button>
+          <Button 
+          onPress={()=>{addOrder(true)}}
+          type='secondary'
+          >
             <Text>Нет</Text>
+          </Button>
+        </View>
+        </View>
+        }
+        </Animated.View >
           </TouchableOpacity>
-        </View>
-        </View>
-        </>)}
-      </RBSheet>
-      <FlatList
-      // contentContainerStyle={{flex:1, borderWidth:1}}
-      // columnWrapperStyle={{justifyContent:'flex-start', width:'100%'}}
-      numColumns={2}
-        // contentContainerStyle={{
-        //   flexDirection: "row",
           
-        //   justifyContent: "space-around",
-        //   paddingBottom: 30,
-        // }}
+      </Modal>
+      <FlatList
+        numColumns={2}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         data={order}
@@ -441,10 +455,10 @@ const Order = ({ navigation, route }) => {
         labelStyle={{ fontSize: 16 }}
         onPress={()=>{ 
           if (shipping) {
-          refRBSheet.current.open()
+          setRBModal(true)
+          handleLayout(200)
+          // refRBSheet.current.open()
         }else{addOrder()}}}
-        //   loading={buttonLoading}
-        //   disabled={buttonLoading}
       >
         {loading?<ActivityIndicator color="#fff"/>:'Оплатить заказ'}
       </Button>

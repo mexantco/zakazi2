@@ -85,9 +85,10 @@ const inProcess = async (id, status, cid, reason, from) => {
       return false;
     } else {
       Alert.alert(
-        docref.data().name,
+        'Номер '+docref.data().number,
         "время заказа: " +
-          new Date(Math.floor(docref.data().time * 1000)).toLocaleTimeString()
+          new Date(Math.floor(docref.data().time * 1000)).toLocaleTimeString(),
+          [{text:'заказ выдан', onPress:()=>{}}]
       );
     }
   }
@@ -148,9 +149,8 @@ const People = ({ navigation, people, index, cid }) => {
     setOrder(people);
   }, [people]);
   let date = new Date(Math.floor(order.time * 1000)).toLocaleTimeString();
-  
   return (
-    <>
+    <View style={{borderBottomWidth:0.5, borderBlockColor:'#00000020', backgroundColor:people.status==0?'#66000020':'#00000000'}}>
       <Modal style={{borderWidth:3, backgroundColor:'red', flex:1, height:500}} visible={modal}>
         <RBSheet
         openDuration={100}
@@ -344,7 +344,7 @@ const People = ({ navigation, people, index, cid }) => {
           </View>
         </TouchableRipple>
       </View>
-    </>
+    </View>
   );
 };
 
@@ -519,7 +519,7 @@ const OrdersBar = ({ navigation, route }) => {
               contentContainerStyle={{ paddingBottom: 30 }}
               showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
-              data={people}
+              data={people.filter(el=>el.status!=6&&el.payed)}
               keyExtractor={(item, index) => index}
               renderItem={({ item, index }) => (
                 <People

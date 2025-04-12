@@ -1,14 +1,13 @@
-import { View, Text, Image, Alert, PermissionsAndroid, Linking, Dimensions, FlatList, Pressable, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, Image, Alert, PermissionsAndroid, Linking, Dimensions, FlatList, Pressable, TouchableOpacity, StyleSheet, TouchableWithoutFeedback } from 'react-native'
 import React, {useState, useEffect, useMemo, useRef} from 'react'
 import * as Location from 'expo-location';
-import YaMap, {Marker, Animation} from 'react-native-yamap2';
 import {enterClub, exitClub, getClubDataById, getClubs} from '../../utils/club'
 import { useDispatch, useSelector } from "react-redux";
 import { setUserData } from '../../reducers/user';
 import { getUserDataById } from '../../utils/user';
 import { Shadow } from 'react-native-shadow-2';
 // import { BaiduMapManager, MapView, MapTypes, Geolocation, Overlay, MapApp } from 'react-native-gizwits-baidu-map';
-import { shadow } from 'react-native-paper';
+import { Icon, shadow } from 'react-native-paper';
 import { getFirestore, query, collection, getDocs} from 'firebase/firestore';
 import { Ionicons, AntDesign, Entypo, MaterialCommunityIcons, Foundation, FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { LatLng, LeafletView } from 'react-native-leaflet-view';
@@ -18,6 +17,8 @@ import Supercluster from 'supercluster';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import { mainTheme } from '../../config/theme';
 import { ScrollView } from 'react-native-gesture-handler';
+import Button from '../../components/ui/Button';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 // BaiduMapManager.initSDK("sIMQlfmOXhQmPLF1QMh4aBp8zZO9Lb2A");
 const width = Dimensions.get('window').width;
@@ -25,8 +26,9 @@ const width = Dimensions.get('window').width;
 const renderClubList = (club, index, handleClick)=>{
   return(
     <TouchableOpacity
-    onPress={()=>{handleClick(club.clubId)}}
-    key={index} style={{backgroundColor:'#ffffff99', borderRadius:20,  marginVertical:10, flexDirection:'row', alignItems:'center', height:100, width:'100%'}}>
+    onPress={()=>{handleClick(club.clubId||club.cid)}}
+    key={index} 
+    style={{backgroundColor:index%2==0?'#ffffff99':'#eeeeee50', borderRadius:20,  marginVertical:10, flexDirection:'row', alignItems:'center', height:100, width:'100%'}}>
             <Image height={70} width={70} style={styles.clubImage} source={{uri: club.ava}}/>
             <Text>{club.ruName}</Text>
     </TouchableOpacity>
@@ -49,13 +51,43 @@ const Maps = ({navigation, route}) => {
     const hideAnimation= route.params.hide;
     const colors = {freeShipping:'#5fb96b', shipping:'#be6b61'}
     const user = useSelector((state) => state.user.userData);
+    const [listShow, setListShow] = useState(false)
     const superclusterRef = useRef(null);
     const [RBList, setRBList] = useState([])
+    const mapHeigth = useSharedValue(70)
+    const listHeigth = useSharedValue(15)
+    const borderMap = useSharedValue(3)
+    const animStyle = useAnimatedStyle(()=>({
+      height: mapHeigth.value+'%',
+      borderTopWidth: borderMap.value
+    }))
+    const animStyleList = useAnimatedStyle(()=>({
+      height: listHeigth.value+'%'
+    }))
+    const animationToggle = ()=>{
+      setListShow(!listShow)
+      mapHeigth.value = withTiming(!listShow?0:70,{
+        duration:300
+      })
+      listHeigth.value = withTiming(!listShow?90:15,{
+        duration:300
+      })
+      borderMap.value = withTiming(!listShow?0:3,{
+        duration:500
+      })
+    }
+
+    const handleListMode = ()=>{
+      animationToggle()
+    }
+
+    let currentZoom 
     const updateClusters = async (event) => {
       if (!mapRef.current || !superclusterRef.current) return;
       // console.log(event)
       const bounds = event.properties.visibleBounds;
       const zoom = event.properties.zoomLevel;
+      currentZoom = event.properties.zoomLevel;
       // console.log('bounds')
       // console.log(bounds.flat())
       // console.log(zoom)
@@ -72,7 +104,6 @@ const Maps = ({navigation, route}) => {
       // console.log(newClusters)
       setClusters(newClusters);
     };
-
     const handleClickonClub = async(id)=>{
       RBRef.current.close()
       hideAnimation();
@@ -81,6 +112,7 @@ const Maps = ({navigation, route}) => {
       },1000)
       }
       useEffect(()=>{
+        
         superclusterRef.current = new Supercluster({
           radius: 35, // Расстояние в пикселях для кластеризации
           maxZoom: 16, // Максимальный уровень масштабирования для кластеризации
@@ -88,20 +120,22 @@ const Maps = ({navigation, route}) => {
         });
     
         // Преобразуем данные клубов в формат, понятный Supercluster
-        const points = clubs.map((club) => ({
+        const points = clubs.map((club) => {
+          if(user&&showFav&&!user.favourite.includes(club.cid)){return false}
+          return({
           type: 'Feature',
           properties: { cluster: false, clubId: club.id, name: club.name, ava:club.ava, ruName:club.ruName },
           geometry: {
             type: 'Point',
             coordinates: [club.lon, club.lat],
           },
-        }));
+        })});
         // Загружаем данные в Supercluster
         superclusterRef.current.load(points);
         updateClusters();
     
      
-    }, [])
+    }, [showFav])
     const renderClusters = () => {
       return clusters.map((cluster, idx) => {
         const { geometry, properties } = cluster;
@@ -109,9 +143,9 @@ const Maps = ({navigation, route}) => {
         
         // console.log(latitude)
         const isCluster = properties.cluster;
-        if(user&&showFav&&!user.favourite.includes(properties.clubId)){
-          return 
-        }
+        // if(user&&showFav&&!user.favourite.includes(properties.clubId)){
+        //   return 
+        // }
         return(
           <MarkerView
         key={idx}
@@ -186,11 +220,7 @@ const Maps = ({navigation, route}) => {
       var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return (c * R)/111.12 ;
     }
-    function getPixelDistance(x1, y1, x2, y2) {
-     
-      return (c * R)/111.12 ;
-    }
-
+  
     useEffect(() => {
 
         let isMounted = true;
@@ -243,34 +273,29 @@ const Maps = ({navigation, route}) => {
         </ScrollView>
       </RBSheet>
       <View style={{flexDirection:'row', borderTopRightRadius:25, borderTopLeftRadius:25, width:'100%', overflow:'visible', backgroundColor:'#c6c3c3'}}>
-        <TouchableOpacity activeOpacity={1} onPress={()=>setShowfav(false)} style={[styles.favBtn, showFav?null:styles.favBtnActive]}>
+        <TouchableOpacity activeOpacity={1} onPress={async()=>{cameraRef.current?.zoomTo(await mapRef.current.getZoom()-0.001,500);setShowfav(false)}} style={[styles.favBtn, showFav?null:styles.favBtnActive]}>
           <View style={[styles.favBtnBack, !showFav?styles.favBtnBackActive:null]}></View>
           <Text>Все</Text>
           </TouchableOpacity>
-        <TouchableOpacity activeOpacity={1} onPress={()=>setShowfav(true)} style={[styles.favBtn, showFav?styles.favBtnActive:null]}>
+        <TouchableOpacity activeOpacity={1} onPress={async ()=>{cameraRef.current?.zoomTo(await mapRef.current.getZoom()-0.001,500); setShowfav(true)}} style={[styles.favBtn, showFav?styles.favBtnActive:null]}>
         <View style={[styles.favBtnBack, showFav?styles.favBtnBackActive:null]}></View>
           <Text>Избранное</Text>
           </TouchableOpacity>
       </View>
+        
+       <Animated.View
 
-       <View
-
-            style={{
+            style={[{
               borderTopWidth:3,
               borderStartWidth:1,
               borderRightWidth:1,
               borderColor:'#faf9ff',
               borderRadius: 25,
               overflow: "hidden",
-              height:'70%',
               width:'100%',
               margin:0,
-              flexGrow:1
-            }}
+            }, animStyle]}
             >
-
-
-      
       <MapView 
       ref={mapRef}
       onRegionIsChanging={(event)=>updateClusters(event)}
@@ -288,7 +313,7 @@ const Maps = ({navigation, route}) => {
           />
           {renderClusters()}
        
-           
+          
           <RasterSource
               id="osm-raster-source"
               tileUrlTemplates={OSM_RASTER_STYLE.sources.osm.tilesVector}
@@ -306,31 +331,46 @@ const Maps = ({navigation, route}) => {
             </VectorSource> */}
         
       </MapView>
-       </View>
-       <View style={{flexDirection:'row', justifyContent:'flex-start', alignItems:'center', height:'15%',  width:'100%', marginTop:20, borderRadius:25, backgroundColor:'#fff', borderTopWidth:2, borderStartWidth:1, borderRightWidth:1, borderColor:'#bbb', margin:0}}>
+       </Animated.View>
+       <Animated.View style={[{flexDirection:'row', justifyContent:'center', alignItems:'center', height:'15%',  width:'100%', marginTop:listShow?0:20, borderRadius:25, backgroundColor:'#fff', borderTopWidth:2, borderStartWidth:1, borderRightWidth:1, borderColor:'#bbb', margin:0}, animStyleList]}>
+       <TouchableOpacity 
+          onPress={handleListMode}
+          style={{borderTopWidth:2, borderStartWidth:1, borderRightWidth:1, borderColor:'#bbb',width:50, height:50, position:'absolute',  top:-35, zIndex:10, backgroundColor:'#f5f5f5', justifyContent:'center', alignItems:'center', borderRadius:25}}>
+          
+          <FontAwesome name='exchange' size={30} color={"#bbb"} style={[styles.tabIcon, {transform:[{rotate:'90 deg'}]} ]}/>
+        
+       </TouchableOpacity>
+       
        <FlatList
        style={{flex:1}}
        data={
         clubs.map(el=>el).sort((a,b)=>(getAngularDistance(a.lat, a.lon, location?.latitude, location?.longitude)-getAngularDistance(b.lat, b.lon, location?.latitude, location?.longitude)))
-      }
+        }
+        contentContainerStyle={{flex:1}}
        keyExtractor={(item, index) => index}
-        horizontal={true}
+       horizontal={listShow?false:true}
        renderItem={({item, index})=>{
         if(showFav&&!user.favourite.includes(item.cid)){
           return 
         }
-        return(
-       <Pressable
-       style={{flexDirection:'column', alignItems:'center'}}
-       onPress={()=>{handleSelectClub(item)}}
-       >
-        <Image width={58} height={58} style={styles.clubImage} source={{uri: item.ava}}/>
-        <Text ellipsizeMode='tail' numberOfLines={1} style={{textAlign:'center', color:'#000', fontSize:10, width:58, overflow:'hidden'}}>{item.ruName}</Text>  
-       </Pressable>)}
+        if(listShow){
+          
+          return renderClubList(item, index, handleClickonClub)
+        }else{
+                  return(
+                <Pressable
+                style={{flexDirection:'column', alignItems:'center'}}
+                onPress={()=>{handleSelectClub(item)}}
+                >
+                  <Image width={58} height={58} style={styles.clubImage} source={{uri: item.ava}}/>
+                  <Text ellipsizeMode='tail' numberOfLines={1} style={{textAlign:'center', color:'#000', fontSize:10, width:58, overflow:'hidden'}}>{item.ruName}</Text>  
+                </Pressable>)
+        }
+        }
        }
        />
 
-        </View>
+        </Animated.View>
     </View>
   )
 }

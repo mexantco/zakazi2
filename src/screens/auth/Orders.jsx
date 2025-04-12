@@ -221,12 +221,13 @@ const People = ({ navigation,people, index, user }) => {
               
                 <Text style={{ color:'#000', fontFamily: "Gilroy-Regular"}}>{people.address!=''&&people.status==2?'Готов в доставке':statuses[people.status]}</Text>
               </View>
-              {unread>0&&
-                <View>
+              
+            </View>
+            {unread>0&&
+                <View style={{marginHorizontal:10}}>
                   <Ionicons name="chatbox-sharp" size={25} color={'#bbb'}/>
                   <Text style={{position:'absolute', right:5, bottom:0, fontWeight:'bold'}}>{unread}</Text>
                 </View>}
-            </View>
             <Ionicons name={emoji[people.status]} size={30} color={colors[people.status]} />
           </View>
         </TouchableRipple>
@@ -297,7 +298,7 @@ setUsers(users);
         contentContainerStyle={{ paddingBottom: 30 }}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
-        data={people.sort((a,b)=>b.time-a.time)}
+        data={people.filter(el=>el.status!=6).sort((a,b)=>b.time-a.time)}
         keyExtractor={(item, index) => index}
         renderItem={({ item, index }) => <People key={index} user={uData} people={item} index={index+1} navigation={navigation} />}
       /></>):(<><Text style={{textAlign:'center', marginTop:30}}>У вас пока нет заказов</Text></>)}

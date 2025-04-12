@@ -17,6 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
+        "googleServicesFile": "./android/app/google-services.json",
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       }
@@ -39,7 +40,8 @@
         {
           "contactsPermission": "Allow $(PRODUCT_NAME) to access your contacts."
         }
-      ]
+      ],
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true

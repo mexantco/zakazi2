@@ -119,11 +119,17 @@ const Club = ({route, navigation}) => {
   const order = useSelector((state) => state.user.order);
   const dispatch = useDispatch()
   const tabBarTranslateY = useSharedValue(100)
+  const tabBarTranslateX = useSharedValue(-100)
   const db = getFirestore();
 
   const animBottom  = useAnimatedStyle(()=>{
     return{
       transform: [{ translateY: tabBarTranslateY.value }],
+    }
+  })
+  const animLeft  = useAnimatedStyle(()=>{
+    return{
+      transform: [{ translateX: tabBarTranslateX.value }],
     }
   })
   const hideAnimation = ()=>{
@@ -143,8 +149,13 @@ const Club = ({route, navigation}) => {
       duration: 1000,
       easing: Easing.out(Easing.exp),
     })
+    tabBarTranslateX.value = withTiming(0,{
+      duration: 1000,
+      easing: Easing.out(Easing.exp),
+    })
   })
   useEffect(()=>{
+    dispatch(setOrder({order: []}))
     navigation.addListener('beforeRemove', ()=>{
       dispatch(setOrder({order: []}))
     })
@@ -187,18 +198,19 @@ const Club = ({route, navigation}) => {
   });
 
 
-   if(!club.working&&club.owner!=userData.uid){
-    return(
-      <View>
-        <Text>Этот магазин временно не принимает заказы</Text>
-      </View>
-    )
-   }
+   const countTabs = userData.uid==club.owner||userData.myClub!=club.cid&&(order&&order.length>0)?4:3
     return (
-      <View
+      !club.working&&club.owner!=userData.uid
+      ?<View style={{flex:1, justifyContent:'center'}}>
+        <Text style={{textAlign:'center'}}>Этот магазин временно не принимает заказы</Text>
+        <View style={{position:'absolute', bottom:5,zIndex:3, left:0, width:Dimensions.get('window').width/countTabs}}>
+            <RenderButtonBack animBottom={animLeft} onPress={()=>{navigation.goBack()}} name='Главная' icon='arrow-left' size={40} />
+        </View>
+      </View>
+      :<View
  style={{ flex: 1,  flexDirection:'column', justifyContent:'flex-start' }}>
-  <View style={{position:'absolute', bottom:5, left:20}}>
-      <RenderButtonBack animBottom={animBottom} onPress={()=>{navigation.goBack()}} name='Главная' icon='arrow-left' size={40} />
+  <View style={{position:'absolute', bottom:5,zIndex:3, left:0, width:Dimensions.get('window').width/countTabs}}>
+      <RenderButtonBack animBottom={animLeft} onPress={()=>{navigation.goBack()}} name='Главная' icon='arrow-left' size={40} />
   </View>
         <Tab.Navigator
 
@@ -206,8 +218,8 @@ screenOptions={{
   swipeEnabled: false,
 
   tabBarStyle: {
-    marginLeft:70,
-    paddingHorizontal:20,
+    // marginLeft:50,
+    paddingLeft:Dimensions.get('window').width/countTabs,
     zIndex:2,
     height:90,
     borderTopWidth: 0,
@@ -217,7 +229,9 @@ screenOptions={{
   },
 }}
 >
+  
 <Tab.Screen
+
   name="Bar"
   initialParams={{clubId:club.cid, clubOwner:club.owner}}
   component={Bar}

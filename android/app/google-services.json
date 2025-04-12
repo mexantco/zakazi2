@@ -12,7 +12,20 @@
           "package_name": "com.mexantco.zakazi"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "32831815315-t2bgdimgd5bg5peujhu8625sd547ej57.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mexantco.zakazi",
+            "certificate_hash": "0df2c60861438a8d0dc65872e0e98c3e70b79df4"
+          }
+        },
+        {
+          "client_id": "32831815315-9qoil7oheivucufifq0m2mgs7k0ba3m8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDDP0nSxAnECI1UeeYJV-MNKn_em8FTXZo"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "32831815315-9qoil7oheivucufifq0m2mgs7k0ba3m8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "32831815315-2o18s31otccf2i81itvc8vb2jllc2tha.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mexantco.zakaziadmin"
+              }
+            }
+          ]
         }
       }
     }
